@@ -271,26 +271,23 @@
     window.addEventListener('DOMContentLoaded', async () => {
       loadStorage();
       
-      if (allQuestions.length === 0) {
-        // 優先讀取整合題庫 questions_all.json，其次為 questions_800.json
-        const tryFiles = ['questions_all.json', 'questions_800.json'];
-        for (let fn of tryFiles) {
-          try {
-            const res = await fetch(fn);
-            if (res.ok) {
-              const data = await res.json();
-              if (Array.isArray(data) && data.length > 0) {
-                allQuestions = data;
-                saveStorage();
-                break;
-              }
+      // 如果目前只有預設的少數題目，嘗試自動抓取同目錄的題庫 JSON
+      if (allQuestions.length <= 8) {
+        try {
+          const res = await fetch('questions_all.json');
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+              allQuestions = data;
+              saveStorage();
             }
-          } catch (e) {}
+          }
+        } catch (e) {
+          console.log('尚未找到自動載入檔案，使用本機儲存資料');
         }
       }
 
-      renderPoolSelectors();
-      renderSubCategories();
+      renderCategories();
       updateStats();
     });
 
