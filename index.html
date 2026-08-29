@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>甲種職安業務主管 智能互動題庫系統</title>
+  <title>職安業務主管與技術士 智能題庫模擬考系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -18,12 +18,12 @@
   <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-30">
     <div class="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
       <div class="flex items-center space-x-2">
-        <i class="fa-solid fa-helmet-safety text-amber-400 text-xl"></i>
-        <h1 class="font-bold text-base tracking-wide">甲種職安主管 刷題神隊友</h1>
+        <i class="fa-solid fa-graduation-cap text-amber-400 text-xl"></i>
+        <h1 class="font-bold text-base tracking-wide">職安衛全能刷題庫</h1>
       </div>
-      <div class="flex items-center space-x-3 text-sm">
-        <button onclick="switchTab('import')" class="px-2.5 py-1 bg-indigo-700/80 rounded-lg text-xs hover:bg-indigo-700 transition">
-          <i class="fa-solid fa-file-import mr-1"></i>題庫庫存
+      <div class="flex items-center space-x-2 text-xs">
+        <button onclick="switchTab('import')" class="px-2.5 py-1 bg-indigo-700/80 rounded-lg hover:bg-indigo-700 transition">
+          <i class="fa-solid fa-database mr-1"></i>題庫庫存
         </button>
       </div>
     </div>
@@ -31,7 +31,7 @@
     <!-- 功能頁籤 -->
     <div class="max-w-md mx-auto grid grid-cols-4 bg-indigo-700 text-xs text-center border-t border-indigo-500/30">
       <button onclick="switchTab('config')" id="tab-config" class="py-2.5 font-bold text-white border-b-2 border-amber-400">
-        <i class="fa-solid fa-sliders block text-sm mb-0.5"></i>模考抽題
+        <i class="fa-solid fa-sliders block text-sm mb-0.5"></i>自選模考
       </button>
       <button onclick="switchTab('practice')" id="tab-practice" class="py-2.5 text-indigo-200 hover:text-white">
         <i class="fa-solid fa-book-open-reader block text-sm mb-0.5"></i>順序練習
@@ -41,7 +41,7 @@
         <span id="wrong-badge" class="hidden absolute top-1 right-3 px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[10px] scale-75">0</span>
       </button>
       <button onclick="switchTab('search')" id="tab-search" class="py-2.5 text-indigo-200 hover:text-white">
-        <i class="fa-solid fa-magnifying-glass block text-sm mb-0.5"></i>題庫搜尋
+        <i class="fa-solid fa-magnifying-glass block text-sm mb-0.5"></i>搜尋題庫
       </button>
     </div>
   </header>
@@ -49,58 +49,70 @@
   <!-- 主內容容器 -->
   <main class="flex-1 max-w-md w-full mx-auto p-4 space-y-4 pb-20">
 
-    <!-- 1. 測驗設定頁面 -->
+    <!-- 1. 測驗設定與題庫選擇頁面 -->
     <div id="view-config" class="space-y-4">
-      <!-- 題庫狀態看板 -->
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+      
+      <!-- 總量看板 -->
+      <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 p-4 rounded-2xl text-white shadow-md flex items-center justify-between">
         <div>
-          <p class="text-xs text-slate-500">當前可用題目總量</p>
-          <p class="text-2xl font-black text-indigo-600 mt-0.5" id="stat-total-q">0 題</p>
+          <p class="text-xs text-indigo-200 font-medium">系統已載入題庫總數</p>
+          <p class="text-2xl font-black mt-0.5" id="stat-total-q">0 題</p>
         </div>
-        <div class="text-right">
-          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-            <i class="fa-solid fa-check-circle mr-1"></i>系統就緒
-          </span>
-        </div>
+        <button onclick="quickSelectAllPools()" class="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-indigo-950 font-bold text-xs rounded-xl shadow-sm transition flex items-center">
+          <i class="fa-solid fa-bolt mr-1"></i>一鍵全題庫總複習
+        </button>
       </div>
 
-      <!-- 抽取題數選擇 -->
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
-        <h2 class="text-sm font-bold text-slate-700 flex items-center">
-          <i class="fa-solid fa-list-ol mr-2 text-indigo-500"></i>選擇測驗題數
-        </h2>
-        <div class="grid grid-cols-4 gap-2">
-          <button type="button" onclick="selectCount(10)" class="btn-count py-3 rounded-xl border text-center font-bold text-sm bg-indigo-50 border-indigo-600 text-indigo-700 transition">10 題</button>
-          <button type="button" onclick="selectCount(20)" class="btn-count py-3 rounded-xl border text-center font-bold text-sm bg-white border-slate-200 text-slate-600 transition">20 題</button>
-          <button type="button" onclick="selectCount(50)" class="btn-count py-3 rounded-xl border text-center font-bold text-sm bg-white border-slate-200 text-slate-600 transition">50 題</button>
-          <button type="button" onclick="selectCount(100)" class="btn-count py-3 rounded-xl border text-center font-bold text-sm bg-white border-slate-200 text-slate-600 transition">100 題</button>
-        </div>
-      </div>
-
-      <!-- 單元分類多選 -->
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
+      <!-- 第一層：選擇主要題庫來源 -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-2.5">
         <div class="flex items-center justify-between">
-          <h2 class="text-sm font-bold text-slate-700 flex items-center">
-            <i class="fa-solid fa-tags mr-2 text-indigo-500"></i>選擇章節單元
+          <h2 class="text-sm font-bold text-slate-800 flex items-center">
+            <i class="fa-solid fa-layer-group mr-2 text-indigo-500"></i>1. 選擇題庫大類
+          </h2>
+          <span class="text-[11px] text-slate-400">可多選或全選</span>
+        </div>
+        <div id="pool-selector" class="space-y-1.5 text-xs">
+          <!-- 動態載入各題庫大類 -->
+        </div>
+      </div>
+
+      <!-- 第二層：細項單元章節 (依上方選擇聯動) -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-bold text-slate-800 flex items-center">
+            <i class="fa-solid fa-tags mr-2 text-indigo-500"></i>2. 細部章節範圍
           </h2>
           <div class="text-xs space-x-2">
-            <button onclick="toggleAllCategories(true)" class="text-indigo-600 font-medium">全選</button>
+            <button onclick="toggleAllSubCategories(true)" class="text-indigo-600 font-medium">全選</button>
             <span class="text-slate-300">|</span>
-            <button onclick="toggleAllCategories(false)" class="text-slate-400 font-medium">清空</button>
+            <button onclick="toggleAllSubCategories(false)" class="text-slate-400 font-medium">清空</button>
           </div>
         </div>
-        <div id="category-selector" class="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1 custom-scrollbar text-xs">
-          <!-- 動態載入類別 -->
+        <div id="category-selector" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar text-xs">
+          <!-- 動態生成細項標籤 -->
         </div>
       </div>
 
-      <!-- 模式與按鈕 -->
-      <div class="space-y-2 pt-2">
-        <button onclick="startExam(false)" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/30 active:scale-[0.98] transition flex items-center justify-center text-base">
-          <i class="fa-solid fa-stopwatch mr-2"></i>開始全真模擬考（計時）
+      <!-- 第三層：抽取題數 -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
+        <h2 class="text-sm font-bold text-slate-800 flex items-center">
+          <i class="fa-solid fa-list-ol mr-2 text-indigo-500"></i>3. 選擇抽題數量
+        </h2>
+        <div class="grid grid-cols-4 gap-2">
+          <button type="button" onclick="selectCount(10)" class="btn-count py-2.5 rounded-xl border text-center font-bold text-xs bg-indigo-50 border-indigo-600 text-indigo-700 transition">10 題</button>
+          <button type="button" onclick="selectCount(20)" class="btn-count py-2.5 rounded-xl border text-center font-bold text-xs bg-white border-slate-200 text-slate-600 transition">20 題</button>
+          <button type="button" onclick="selectCount(50)" class="btn-count py-2.5 rounded-xl border text-center font-bold text-xs bg-white border-slate-200 text-slate-600 transition">50 題</button>
+          <button type="button" onclick="selectCount(100)" class="btn-count py-2.5 rounded-xl border text-center font-bold text-xs bg-white border-slate-200 text-slate-600 transition">100 題</button>
+        </div>
+      </div>
+
+      <!-- 開始按鈕 -->
+      <div class="space-y-2 pt-1">
+        <button onclick="startExam(false)" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/30 active:scale-[0.98] transition flex items-center justify-center text-sm">
+          <i class="fa-solid fa-stopwatch mr-2"></i>開始模擬考（計時評分）
         </button>
-        <button onclick="startExam(true)" class="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold active:scale-[0.98] transition flex items-center justify-center text-sm">
-          <i class="fa-solid fa-bolt mr-2 text-amber-500"></i>即時回饋練習（看解答）
+        <button onclick="startExam(true)" class="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold active:scale-[0.98] transition flex items-center justify-center text-xs">
+          <i class="fa-solid fa-bolt mr-2 text-amber-500"></i>即時回饋練習（每題看解答）
         </button>
       </div>
     </div>
@@ -121,42 +133,50 @@
 
       <!-- 題目主卡片 -->
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4 relative">
-        <div class="flex items-start justify-between">
-          <span id="q-category" class="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 font-medium rounded-lg">相關法規</span>
-          <button onclick="toggleBookmark()" id="btn-bookmark" class="text-slate-400 hover:text-amber-500 transition text-base">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex flex-wrap gap-1 items-center">
+            <span id="q-type-badge" class="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-600 font-bold rounded">單選題</span>
+            <span id="q-category" class="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 font-medium rounded truncate max-w-[200px]">章節名稱</span>
+          </div>
+          <button onclick="toggleBookmark()" id="btn-bookmark" class="text-slate-400 hover:text-amber-500 transition text-base shrink-0">
             <i class="fa-regular fa-bookmark"></i>
           </button>
         </div>
         
-        <h3 id="q-text" class="text-base font-bold text-slate-800 leading-relaxed min-h-[50px]">
+        <h3 id="q-text" class="text-sm sm:text-base font-bold text-slate-800 leading-relaxed min-h-[50px]">
           載入中...
         </h3>
 
         <!-- 選項列表 -->
-        <div id="q-options" class="space-y-2.5 pt-2">
+        <div id="q-options" class="space-y-2.5 pt-1">
           <!-- 動態生成選項 -->
         </div>
 
-        <!-- 即時反饋/詳解 (即時模式顯示) -->
+        <!-- 複選題專用送出確認按鈕 -->
+        <div id="multi-submit-container" class="hidden pt-2">
+          <button onclick="submitMultiAnswer()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition">
+            確認此題送出
+          </button>
+        </div>
+
+        <!-- 即時反饋/詳解 -->
         <div id="q-explanation" class="hidden mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
           <p class="font-bold text-slate-700" id="exp-status">正確答案：(1)</p>
-          <p class="text-slate-600 leading-normal" id="exp-note">請熟記相關法規與安全作業規範。</p>
+          <p class="text-slate-500 text-[11px] leading-normal" id="exp-note">請熟記相關規範與標準題庫考點。</p>
         </div>
       </div>
 
       <!-- 題號快捷列 -->
       <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200">
-        <p class="text-xs text-slate-400 font-medium mb-2">題號快速跳轉</p>
-        <div id="exam-palette" class="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
-          <!-- 動態產生題號圓點 -->
-        </div>
+        <p class="text-[11px] text-slate-400 font-medium mb-2">題號快速切換</p>
+        <div id="exam-palette" class="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar"></div>
       </div>
 
       <!-- 底部操作列 -->
       <div class="flex gap-2">
-        <button onclick="prevQuestion()" id="btn-prev" class="flex-1 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-sm disabled:opacity-40">上一題</button>
-        <button onclick="nextQuestion()" id="btn-next" class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm">下一題</button>
-        <button onclick="finishExam()" class="px-4 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm">交卷</button>
+        <button onclick="prevQuestion()" id="btn-prev" class="flex-1 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-xs disabled:opacity-40">上一題</button>
+        <button onclick="nextQuestion()" id="btn-next" class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold text-xs">下一題</button>
+        <button onclick="finishExam()" class="px-4 py-3 bg-emerald-600 text-white rounded-xl font-bold text-xs">交卷</button>
       </div>
     </div>
 
@@ -166,95 +186,70 @@
         <div id="result-icon" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-2xl bg-emerald-100 text-emerald-600">
           <i class="fa-solid fa-trophy"></i>
         </div>
-        <h2 class="text-xl font-black text-slate-800" id="result-title">測驗完成！</h2>
-        <div class="py-2">
+        <h2 class="text-lg font-black text-slate-800" id="result-title">測驗完成！</h2>
+        <div class="py-1">
           <span class="text-4xl font-black text-indigo-600" id="result-score">85</span>
-          <span class="text-slate-400 text-sm">/ 100分</span>
+          <span class="text-slate-400 text-xs">/ 100分</span>
         </div>
         <div class="grid grid-cols-3 gap-2 pt-2 border-t text-xs">
           <div class="p-2 bg-slate-50 rounded-lg">
-            <p class="text-slate-400">總題數</p>
+            <p class="text-slate-400 text-[10px]">總題數</p>
             <p class="font-bold text-slate-700 mt-0.5" id="res-total">20</p>
           </div>
           <div class="p-2 bg-emerald-50 rounded-lg">
-            <p class="text-emerald-600">答對</p>
+            <p class="text-emerald-600 text-[10px]">答對</p>
             <p class="font-bold text-emerald-700 mt-0.5" id="res-correct">17</p>
           </div>
           <div class="p-2 bg-rose-50 rounded-lg">
-            <p class="text-rose-600">答錯</p>
+            <p class="text-rose-600 text-[10px]">答錯</p>
             <p class="font-bold text-rose-700 mt-0.5" id="res-wrong">3</p>
           </div>
         </div>
       </div>
 
       <div class="space-y-2">
-        <button onclick="reviewWrongAnswers()" id="btn-review-wrong" class="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-sm transition">
-          <i class="fa-solid fa-rotate-left mr-2"></i>立即檢討本次錯題
-        </button>
-        <button onclick="switchTab('config')" class="w-full py-3 bg-slate-200 text-slate-700 rounded-xl font-bold text-sm">
-          返回測驗設定
+        <button onclick="switchTab('config')" class="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-xs">
+          再測驗一次
         </button>
       </div>
     </div>
 
-    <!-- 4. 題庫匯入與管理頁面 -->
+    <!-- 4. 題庫庫存管理頁面 -->
     <div id="view-import" class="hidden space-y-4">
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
         <h2 class="font-bold text-sm text-slate-800 flex items-center">
-          <i class="fa-solid fa-cloud-arrow-up mr-2 text-indigo-600"></i>匯入 1,800 題完整題庫
+          <i class="fa-solid fa-cloud-arrow-up mr-2 text-indigo-600"></i>管理與匯入題庫 JSON
         </h2>
         <p class="text-xs text-slate-500 leading-relaxed">
-          貼上題庫 JSON 或選取 JSON 檔案，資料將自動儲存於手機 LocalStorage，隨時皆可離線刷題。
+          若有產生新的 <code>questions_all.json</code>，可點擊下方按鈕手動更新載入。
         </p>
 
-        <div class="pt-2 flex gap-2">
-          <label class="flex-1 py-2.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl text-center text-xs font-bold cursor-pointer hover:bg-indigo-100 transition">
-            <i class="fa-solid fa-file-arrow-up mr-1"></i>選取題庫 JSON 檔案
+        <div class="pt-2">
+          <label class="w-full block py-3 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl text-center text-xs font-bold cursor-pointer hover:bg-indigo-100 transition">
+            <i class="fa-solid fa-file-arrow-up mr-1"></i>選取 questions_all.json 檔案
             <input type="file" id="file-input" accept=".json" class="hidden" onchange="handleFileImport(event)">
           </label>
-          <button onclick="resetDefaultQuestions()" class="py-2.5 px-3 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200">
-            重設示範題
-          </button>
         </div>
-
-        <textarea id="json-input" placeholder="或直接在此貼上 JSON 格式題庫文字..." class="w-full h-32 p-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono custom-scrollbar"></textarea>
-        
-        <button onclick="handleTextImport()" class="w-full py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition">
-          確認解析並儲存題庫
-        </button>
       </div>
     </div>
 
     <!-- 5. 搜尋頁面 -->
     <div id="view-search" class="hidden space-y-3">
       <div class="relative">
-        <input type="text" id="search-input" oninput="handleSearch()" placeholder="輸入關鍵字檢索題目（例：噪音、特定化學、起重機）..." class="w-full py-3 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <input type="text" id="search-input" oninput="handleSearch()" placeholder="輸入關鍵字檢索題目（例：噪音、起重機、罰鍰）..." class="w-full py-3 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
       </div>
-      <div id="search-results" class="space-y-2 max-h-[65vh] overflow-y-auto pr-1 custom-scrollbar">
-        <!-- 搜尋結果 -->
-      </div>
+      <div id="search-results" class="space-y-2 max-h-[65vh] overflow-y-auto pr-1 custom-scrollbar"></div>
     </div>
 
   </main>
 
   <script>
-    // 預載示範核心題目 (包含法規、管理、化學、物理等重要考點)
-    const DEFAULT_QUESTIONS = [
-      { id: 1, cat: "相關法規", q: "依職業安全衛生管理辦法規定，職業安全衛生委員會應置委員幾人以上？", opt: ["4人", "5人", "6人", "7人"], ans: 4 },
-      { id: 2, cat: "相關法規", q: "依職業安全衛生設施規則規定，對於良導體設備內從事檢修作業使用之手提式照明燈，其電壓不得超過多少伏特？", opt: ["9", "12", "24", "110"], ans: 3 },
-      { id: 3, cat: "相關法規", q: "依職業安全衛生法規定，事業單位工作場所發生勞工死亡職業災害時，雇主應於多少小時內報告勞動檢查機構？", opt: ["8小時", "24小時", "48小時", "72小時"], ans: 1 },
-      { id: 4, cat: "管理系統", q: "職業安全衛生管理系統所強調的 P-D-C-A 管理循環，其「C」代表意義為何？", opt: ["Control", "Clean", "Clear", "Check"], ans: 4 },
-      { id: 5, cat: "風險評估", q: "考量降低風險之控制措施時，下列順序何者最優先？", opt: ["消除", "取代", "工程控制", "個人防護具"], ans: 1 },
-      { id: 6, cat: "火災爆炸", q: "家庭常用的桶裝液化石油氣，其主要成分為下列何者？", opt: ["甲烷、乙烷", "丙烷、丁烷", "乙炔", "乙烯、丙烯"], ans: 2 },
-      { id: 7, cat: "化學危害", q: "缺氧症預防規則規定，缺氧危險場所係指空氣中氧氣濃度在多少%以下場所？", opt: ["14%", "16%", "18%", "20%"], ans: 3 },
-      { id: 8, cat: "物理危害", q: "人耳可聽見之聲音頻率範圍大致為多少 Hz？", opt: ["0.1~200", "20~20,000", "2,000~4,000", "20,000以上"], ans: 2 }
-    ];
-
     let allQuestions = [];
     let currentPool = [];
     let currentIndex = 0;
     let userAnswers = {};
+    let multiDraft = []; // 暫存複選答案
     let examTimer = null;
     let timeLeft = 0;
     let isInstantFeedback = false;
@@ -262,33 +257,46 @@
     let wrongBook = new Set();
     let bookmarks = new Set();
 
-    // 初始化
-// 初始化（自動載入同目錄的 787 題庫）
-window.addEventListener('DOMContentLoaded', async () => {
-  loadStorage();
-  
-  if (allQuestions.length <= 8) {
-    try {
-      const res = await fetch('questions_800.json');
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          allQuestions = data;
-          saveStorage();
+    // 定義大題庫名稱歸類
+// 精準拆分各大獨立題庫
+    function getPoolName(cat = "") {
+      if (cat.includes("共同科目") || cat.includes("90006")) return "職安共同科目 (90006)";
+      if (cat.includes("工作倫理") || cat.includes("道德") || cat.includes("90007")) return "工作倫理與道德 (90007)";
+      if (cat.includes("甲安") || cat.includes("22000") || cat.includes("職業安全管理")) return "甲級職業安全管理 (22000)";
+      if (cat.includes("甲衛") || cat.includes("22100") || cat.includes("職業衛生管理")) return "甲級職業衛生管理 (22100)";
+      return "甲種業務主管 (網站題庫+詠湄提供)";
+    }
+
+    // 初始化自動載入
+    window.addEventListener('DOMContentLoaded', async () => {
+      loadStorage();
+      
+      if (allQuestions.length === 0) {
+        // 優先讀取整合題庫 questions_all.json，其次為 questions_800.json
+        const tryFiles = ['questions_all.json', 'questions_800.json'];
+        for (let fn of tryFiles) {
+          try {
+            const res = await fetch(fn);
+            if (res.ok) {
+              const data = await res.json();
+              if (Array.isArray(data) && data.length > 0) {
+                allQuestions = data;
+                saveStorage();
+                break;
+              }
+            }
+          } catch (e) {}
         }
       }
-    } catch (e) {
-      console.log('未找到自動載入題庫，使用本機題庫');
-    }
-  }
 
-  renderCategories();
-  updateStats();
-});
+      renderPoolSelectors();
+      renderSubCategories();
+      updateStats();
+    });
 
     function loadStorage() {
       const savedQ = localStorage.getItem('osh_q_db');
-      allQuestions = savedQ ? JSON.parse(savedQ) : DEFAULT_QUESTIONS;
+      if (savedQ) allQuestions = JSON.parse(savedQ);
       
       const savedWrong = localStorage.getItem('osh_wrong_ids');
       if (savedWrong) wrongBook = new Set(JSON.parse(savedWrong));
@@ -314,29 +322,71 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // 渲染分類篩選勾選框
-    function renderCategories() {
-      const cats = Array.from(new Set(allQuestions.map(q => q.cat || '綜合')));
+    // 渲染第一層：大題庫選單
+    function renderPoolSelectors() {
+      const poolMap = {};
+      allQuestions.forEach(q => {
+        const pool = getPoolName(q.cat);
+        poolMap[pool] = (poolMap[pool] || 0) + 1;
+      });
+
+      const container = document.getElementById('pool-selector');
+      container.innerHTML = Object.entries(poolMap).map(([poolName, count], idx) => `
+        <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-indigo-50/50 transition">
+          <div class="flex items-center">
+            <input type="checkbox" name="pool-cb" value="${poolName}" checked onchange="renderSubCategories()" class="rounded text-indigo-600 focus:ring-0 mr-2.5">
+            <span class="font-bold text-slate-700">${poolName}</span>
+          </div>
+          <span class="text-[11px] font-medium bg-slate-200/80 px-2 py-0.5 rounded-full text-slate-600">${count} 題</span>
+        </label>
+      `).join('');
+    }
+
+    // 一鍵全選所有題庫
+    function quickSelectAllPools() {
+      document.querySelectorAll('input[name="pool-cb"]').forEach(cb => cb.checked = true);
+      renderSubCategories();
+      toggleAllSubCategories(true);
+      selectCount(50);
+      alert('已設定為「全真大會考／全題庫總複習」模式（全題庫 50 題隨機抽考）！');
+    }
+
+    // 渲染第二層：章節單元
+    function renderSubCategories() {
+      const checkedPools = Array.from(document.querySelectorAll('input[name="pool-cb"]:checked')).map(cb => cb.value);
+      
+      const subCats = new Set();
+      allQuestions.forEach(q => {
+        if (checkedPools.includes(getPoolName(q.cat))) {
+          subCats.add(q.cat || '綜合');
+        }
+      });
+
       const container = document.getElementById('category-selector');
-      container.innerHTML = cats.map(c => `
+      if (subCats.size === 0) {
+        container.innerHTML = '<p class="col-span-2 text-slate-400 py-2 text-center">請先勾選上方題庫大類</p>';
+        return;
+      }
+
+      container.innerHTML = Array.from(subCats).map(c => `
         <label class="flex items-center p-2 rounded-lg bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100">
-          <input type="checkbox" name="exam-cat" value="${c}" checked class="rounded text-indigo-600 focus:ring-0 mr-2">
+          <input type="checkbox" name="subcat-cb" value="${c}" checked class="rounded text-indigo-600 focus:ring-0 mr-2">
           <span class="truncate font-medium text-slate-700">${c}</span>
         </label>
       `).join('');
     }
 
-    function toggleAllCategories(check) {
-      document.querySelectorAll('input[name="exam-cat"]').forEach(el => el.checked = check);
+    function toggleAllSubCategories(check) {
+      document.querySelectorAll('input[name="subcat-cb"]').forEach(el => el.checked = check);
     }
 
     function selectCount(num) {
       selectedCount = num;
       document.querySelectorAll('.btn-count').forEach(btn => {
         if (btn.innerText.includes(num + '')) {
-          btn.className = 'btn-count py-3 rounded-xl border text-center font-bold text-sm bg-indigo-50 border-indigo-600 text-indigo-700 transition';
+          btn.className = 'btn-count py-2.5 rounded-xl border text-center font-bold text-xs bg-indigo-50 border-indigo-600 text-indigo-700 transition';
         } else {
-          btn.className = 'btn-count py-3 rounded-xl border text-center font-bold text-sm bg-white border-slate-200 text-slate-600 transition';
+          btn.className = 'btn-count py-2.5 rounded-xl border text-center font-bold text-xs bg-white border-slate-200 text-slate-600 transition';
         }
       });
     }
@@ -344,7 +394,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     // 開始測驗
     function startExam(instantMode = false) {
       isInstantFeedback = instantMode;
-      const checkedCats = Array.from(document.querySelectorAll('input[name="exam-cat"]:checked')).map(el => el.value);
+      const checkedCats = Array.from(document.querySelectorAll('input[name="subcat-cb"]:checked')).map(el => el.value);
       
       if (checkedCats.length === 0) {
         alert('請至少勾選一個章節單元！');
@@ -353,24 +403,21 @@ window.addEventListener('DOMContentLoaded', async () => {
 
       let filtered = allQuestions.filter(q => checkedCats.includes(q.cat || '綜合'));
       if (filtered.length === 0) {
-        alert('所選類別尚無題目！');
+        alert('所選範圍尚無題目！');
         return;
       }
 
-      // 隨機抽題
       filtered.sort(() => Math.random() - 0.5);
       currentPool = filtered.slice(0, Math.min(selectedCount, filtered.length));
       currentIndex = 0;
       userAnswers = {};
 
-      // 介面切換
       document.getElementById('view-config').classList.add('hidden');
       document.getElementById('view-result').classList.add('hidden');
       document.getElementById('view-exam').classList.remove('hidden');
 
       document.getElementById('exam-mode-badge').innerText = instantMode ? '即時回饋' : '全真模考';
       
-      // 計時器設置 (每題 1 分鐘)
       clearInterval(examTimer);
       if (!instantMode) {
         timeLeft = currentPool.length * 60;
@@ -398,70 +445,126 @@ window.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('exam-timer').innerText = `${min}:${sec}`;
     }
 
-    // 載入當前題目
+    // 判斷是否為複選題
+    function isMultiQuestion(q) {
+      return Array.isArray(q.ans) && q.ans.length > 1;
+    }
+
+    // 載入題目
     function loadQuestion(index) {
       currentIndex = index;
       const q = currentPool[index];
+      const isMulti = isMultiQuestion(q);
 
       document.getElementById('exam-progress').innerText = `${index + 1} / ${currentPool.length}`;
       document.getElementById('q-category').innerText = q.cat || '綜合';
+      document.getElementById('q-type-badge').innerText = isMulti ? '複選題' : '單選題';
+      document.getElementById('q-type-badge').className = isMulti 
+        ? 'text-[10px] px-2 py-0.5 bg-amber-100 text-amber-800 font-bold rounded'
+        : 'text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-600 font-bold rounded';
+      
       document.getElementById('q-text').innerText = `${index + 1}. ${q.q}`;
 
-      // 書籤狀態
       const bmBtn = document.getElementById('btn-bookmark');
       bmBtn.innerHTML = bookmarks.has(q.id) ? '<i class="fa-solid fa-bookmark text-amber-500"></i>' : '<i class="fa-regular fa-bookmark"></i>';
 
-      // 選項渲染
       const optContainer = document.getElementById('q-options');
       const answered = userAnswers[index];
+      const multiSubmitBox = document.getElementById('multi-submit-container');
+
+      if (isMulti) {
+        multiDraft = answered ? [...answered] : [];
+        multiSubmitBox.classList.remove('hidden');
+      } else {
+        multiSubmitBox.classList.add('hidden');
+      }
 
       optContainer.innerHTML = q.opt.map((optText, i) => {
         const optNum = i + 1;
         let optStyle = "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100";
         
-        if (answered !== undefined) {
-          if (isInstantFeedback) {
-            if (optNum === q.ans) optStyle = "bg-emerald-50 border-emerald-500 text-emerald-800 font-bold";
-            else if (optNum === answered) optStyle = "bg-rose-50 border-rose-500 text-rose-800";
+        if (!isMulti) {
+          // 單選判定
+          if (answered !== undefined) {
+            if (isInstantFeedback) {
+              if (optNum === q.ans) optStyle = "bg-emerald-50 border-emerald-500 text-emerald-800 font-bold";
+              else if (optNum === answered) optStyle = "bg-rose-50 border-rose-500 text-rose-800";
+            } else {
+              if (optNum === answered) optStyle = "bg-indigo-50 border-indigo-600 text-indigo-800 font-bold";
+            }
+          }
+        } else {
+          // 複選判定
+          const isSelected = multiDraft.includes(optNum);
+          if (answered !== undefined && isInstantFeedback) {
+            const isCorrectOpt = q.ans.includes(optNum);
+            if (isCorrectOpt) optStyle = "bg-emerald-50 border-emerald-500 text-emerald-800 font-bold";
+            else if (isSelected) optStyle = "bg-rose-50 border-rose-500 text-rose-800";
           } else {
-            if (optNum === answered) optStyle = "bg-indigo-50 border-indigo-600 text-indigo-800 font-bold";
+            if (isSelected) optStyle = "bg-indigo-50 border-indigo-600 text-indigo-800 font-bold";
           }
         }
 
         return `
-          <button onclick="handleOptionSelect(${optNum})" class="w-full p-3.5 rounded-xl border text-left text-xs sm:text-sm transition flex items-start space-x-3 ${optStyle}">
-            <span class="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center font-bold text-xs shrink-0">${optNum}</span>
-            <span class="pt-0.5 leading-relaxed">${optText}</span>
+          <button onclick="handleOptionClick(${optNum})" class="w-full p-3 rounded-xl border text-left text-xs sm:text-sm transition flex items-start space-x-2.5 ${optStyle}">
+            <span class="w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">${optNum}</span>
+            <span class="leading-relaxed">${optText}</span>
           </button>
         `;
       }).join('');
 
-      // 即時反饋卡片控制
+      // 即時解析展示
       const expBox = document.getElementById('q-explanation');
       if (isInstantFeedback && answered !== undefined) {
         expBox.classList.remove('hidden');
-        document.getElementById('exp-status').innerText = answered === q.ans ? "✅ 回答正確！" : `❌ 回答錯誤，正確答案為 (${q.ans})`;
-        document.getElementById('exp-status').className = answered === q.ans ? "font-bold text-emerald-700" : "font-bold text-rose-700";
+        let isCorrect = false;
+        if (isMulti) {
+          isCorrect = JSON.stringify([...answered].sort()) === JSON.stringify([...q.ans].sort());
+        } else {
+          isCorrect = answered === q.ans;
+        }
+
+        const ansLabel = isMulti ? q.ans.join('、') : q.ans;
+        document.getElementById('exp-status').innerText = isCorrect ? "✅ 回答正確！" : `❌ 回答錯誤，正確解答為 (${ansLabel})`;
+        document.getElementById('exp-status').className = isCorrect ? "font-bold text-emerald-700" : "font-bold text-rose-700";
       } else {
         expBox.classList.add('hidden');
       }
 
-      // 控制按鈕
       document.getElementById('btn-prev').disabled = index === 0;
       document.getElementById('btn-next').innerText = index === currentPool.length - 1 ? '最後一題' : '下一題';
       
       updatePaletteStatus();
     }
 
-    function handleOptionSelect(selectedOpt) {
-      userAnswers[currentIndex] = selectedOpt;
+    function handleOptionClick(num) {
       const q = currentPool[currentIndex];
-
-      if (selectedOpt !== q.ans) {
-        wrongBook.add(q.id);
+      if (isMultiQuestion(q)) {
+        if (multiDraft.includes(num)) multiDraft = multiDraft.filter(x => x !== num);
+        else multiDraft.push(num);
+        loadQuestion(currentIndex);
       } else {
-        wrongBook.delete(q.id);
+        userAnswers[currentIndex] = num;
+        if (num !== q.ans) wrongBook.add(q.id);
+        else wrongBook.delete(q.id);
+        saveStorage();
+        updateStats();
+        loadQuestion(currentIndex);
       }
+    }
+
+    function submitMultiAnswer() {
+      if (multiDraft.length === 0) {
+        alert('請至少選擇一個選項！');
+        return;
+      }
+      const q = currentPool[currentIndex];
+      userAnswers[currentIndex] = [...multiDraft];
+      
+      const isCorrect = JSON.stringify([...multiDraft].sort()) === JSON.stringify([...q.ans].sort());
+      if (!isCorrect) wrongBook.add(q.id);
+      else wrongBook.delete(q.id);
+
       saveStorage();
       updateStats();
       loadQuestion(currentIndex);
@@ -475,7 +578,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       if (currentIndex < currentPool.length - 1) loadQuestion(currentIndex + 1);
     }
 
-    // 題號 Palette
     function renderPalette() {
       const palette = document.getElementById('exam-palette');
       palette.innerHTML = currentPool.map((_, i) => `
@@ -507,12 +609,18 @@ window.addEventListener('DOMContentLoaded', async () => {
       loadQuestion(currentIndex);
     }
 
-    // 交卷結算
     function finishExam() {
       clearInterval(examTimer);
       let correct = 0;
       currentPool.forEach((q, i) => {
-        if (userAnswers[i] === q.ans) correct++;
+        const ans = userAnswers[i];
+        if (ans !== undefined) {
+          if (isMultiQuestion(q)) {
+            if (JSON.stringify([...ans].sort()) === JSON.stringify([...q.ans].sort())) correct++;
+          } else {
+            if (ans === q.ans) correct++;
+          }
+        }
       });
 
       const score = Math.round((correct / currentPool.length) * 100);
@@ -534,7 +642,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // 頁籤切換
     function switchTab(tab) {
       ['config', 'exam', 'result', 'import', 'search'].forEach(v => {
         document.getElementById(`view-${v}`).classList.add('hidden');
@@ -549,6 +656,22 @@ window.addEventListener('DOMContentLoaded', async () => {
       if (tab === 'config') document.getElementById('view-config').classList.remove('hidden');
       if (tab === 'import') document.getElementById('view-import').classList.remove('hidden');
       if (tab === 'search') document.getElementById('view-search').classList.remove('hidden');
+      if (tab === 'practice') {
+        if (allQuestions.length === 0) {
+          alert('目前無題目！');
+          switchTab('config');
+          return;
+        }
+        currentPool = [...allQuestions];
+        currentIndex = 0;
+        userAnswers = {};
+        isInstantFeedback = true;
+        document.getElementById('view-exam').classList.remove('hidden');
+        document.getElementById('exam-mode-badge').innerText = '順序練習';
+        document.getElementById('timer-box').classList.add('hidden');
+        renderPalette();
+        loadQuestion(0);
+      }
       if (tab === 'wrong') {
         const wrongQs = allQuestions.filter(q => wrongBook.has(q.id));
         if (wrongQs.length === 0) {
@@ -568,7 +691,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // 題庫匯入處理
     function handleFileImport(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -579,7 +701,8 @@ window.addEventListener('DOMContentLoaded', async () => {
           if (Array.isArray(parsed)) {
             allQuestions = parsed;
             saveStorage();
-            renderCategories();
+            renderPoolSelectors();
+            renderSubCategories();
             updateStats();
             alert(`成功載入 ${parsed.length} 題題庫！`);
             switchTab('config');
@@ -591,51 +714,31 @@ window.addEventListener('DOMContentLoaded', async () => {
       reader.readAsText(file);
     }
 
-    function handleTextImport() {
-      const text = document.getElementById('json-input').value.trim();
-      if (!text) return;
-      try {
-        const parsed = JSON.parse(text);
-        if (Array.isArray(parsed)) {
-          allQuestions = parsed;
-          saveStorage();
-          renderCategories();
-          updateStats();
-          alert(`成功載入 ${parsed.length} 題題庫！`);
-          switchTab('config');
-        }
-      } catch (err) {
-        alert('JSON 格式錯誤！');
-      }
-    }
-
-    function resetDefaultQuestions() {
-      allQuestions = DEFAULT_QUESTIONS;
-      saveStorage();
-      renderCategories();
-      updateStats();
-      alert('已重設為預設範例題庫！');
-    }
-
-    // 搜尋功能
     function handleSearch() {
       const kw = document.getElementById('search-input').value.trim().toLowerCase();
       const container = document.getElementById('search-results');
       if (!kw) { container.innerHTML = ''; return; }
 
       const matched = allQuestions.filter(q => q.q.toLowerCase().includes(kw));
-      container.innerHTML = matched.map(q => `
-        <div class="p-3 bg-white border border-slate-200 rounded-xl text-xs space-y-1.5 shadow-sm">
-          <div class="flex items-center justify-between text-slate-400 text-[10px]">
-            <span>${q.cat || '綜合'}</span>
-            <span class="font-bold text-indigo-600">解答：(${q.ans})</span>
+      container.innerHTML = matched.map(q => {
+        const isMulti = isMultiQuestion(q);
+        const ansLabel = isMulti ? q.ans.join('、') : q.ans;
+        return `
+          <div class="p-3 bg-white border border-slate-200 rounded-xl text-xs space-y-1.5 shadow-sm">
+            <div class="flex items-center justify-between text-slate-400 text-[10px]">
+              <span class="font-medium bg-slate-100 px-1.5 py-0.5 rounded">${q.cat || '綜合'}</span>
+              <span class="font-bold text-indigo-600">解答：(${ansLabel})</span>
+            </div>
+            <p class="font-bold text-slate-800">${q.q}</p>
+            <div class="space-y-0.5 text-slate-500">
+              ${q.opt.map((opt, i) => {
+                const isCorrect = isMulti ? q.ans.includes(i+1) : (i+1) === q.ans;
+                return `<p class="${isCorrect ? 'text-emerald-600 font-bold' : ''}">${i+1}. ${opt}</p>`;
+              }).join('')}
+            </div>
           </div>
-          <p class="font-bold text-slate-800">${q.q}</p>
-          <div class="space-y-0.5 text-slate-500">
-            ${q.opt.map((opt, i) => `<p class="${(i+1)===q.ans?'text-emerald-600 font-bold':''}">${i+1}. ${opt}</p>`).join('')}
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
   </script>
 </body>
