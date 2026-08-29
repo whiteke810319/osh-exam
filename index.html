@@ -267,29 +267,32 @@
       return "甲種業務主管 (網站題庫+詠湄提供)";
     }
 
-    // 初始化自動載入
-    window.addEventListener('DOMContentLoaded', async () => {
-      loadStorage();
-      
-      // 如果目前只有預設的少數題目，嘗試自動抓取同目錄的題庫 JSON
-      if (allQuestions.length <= 8) {
-        try {
-          const res = await fetch('questions_all.json');
-          if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data) && data.length > 0) {
-              allQuestions = data;
-              saveStorage();
-            }
-          }
-        } catch (e) {
-          console.log('尚未找到自動載入檔案，使用本機儲存資料');
+// 初始化（自動載入同目錄的全新總題庫）
+window.addEventListener('DOMContentLoaded', async () => {
+  loadStorage();
+  
+  // 判斷如果題目數量不是最新的 2000 多題，就自動重新抓取 questions_all.json
+  if (allQuestions.length < 2000) {
+    try {
+      const res = await fetch('questions_all.json');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          allQuestions = data;
+          saveStorage();
         }
       }
+    } catch (e) {
+      console.log('未找到 questions_all.json，使用既有題庫');
+    }
+  }
 
-      renderCategories();
-      updateStats();
-    });
+  // 重新渲染大類與子章節選單
+  if (typeof renderPoolSelectors === 'function') renderPoolSelectors();
+  if (typeof renderSubCategories === 'function') renderSubCategories();
+  if (typeof renderCategories === 'function') renderCategories();
+  updateStats();
+});
 
     function loadStorage() {
       const savedQ = localStorage.getItem('osh_q_db');
