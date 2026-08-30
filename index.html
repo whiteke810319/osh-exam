@@ -31,7 +31,7 @@
       </div>
     </div>
 
-    <!-- 6大功能頁籤 (包含複習講義) -->
+    <!-- 6大功能頁籤 -->
     <div class="max-w-md mx-auto grid grid-cols-6 bg-indigo-700 text-[10px] text-center border-t border-indigo-500/30">
       <button onclick="switchTab('lecture')" id="tab-lecture" class="py-2.5 font-bold text-white border-b-2 border-amber-400">
         <i class="fa-solid fa-book-bookmark block text-sm mb-0.5 text-amber-300"></i>複習講義
@@ -58,9 +58,8 @@
   <!-- 主內容容器 -->
   <main class="flex-1 max-w-md w-full mx-auto p-4 space-y-4 pb-20">
 
-    <!-- 1. 重點複習講義分頁 (NEW) -->
+    <!-- 1. 重點複習講義分頁 -->
     <div id="view-lecture" class="space-y-3">
-      <!-- 篩選題庫來源 -->
       <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between gap-2">
         <div class="flex items-center text-xs font-bold text-slate-700 shrink-0">
           <i class="fa-solid fa-filter mr-1.5 text-indigo-500"></i>題庫講義
@@ -74,11 +73,7 @@
           <option value="工作倫理與道德 (90007)">工作倫理與道德 (90007)</option>
         </select>
       </div>
-
-      <!-- 講義卡片清單列表 -->
-      <div id="lecture-cards-container" class="space-y-3">
-        <!-- 動態渲染重點卡片 -->
-      </div>
+      <div id="lecture-cards-container" class="space-y-3"></div>
     </div>
 
     <!-- 2. 測驗設定頁面 -->
@@ -93,7 +88,6 @@
         </button>
       </div>
 
-      <!-- 第一層：選擇題庫大類 -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-bold text-slate-800 flex items-center">
@@ -104,7 +98,6 @@
         <div id="pool-selector" class="space-y-1.5 text-xs"></div>
       </div>
 
-      <!-- 第二層：細項章節 -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-bold text-slate-800 flex items-center">
@@ -119,7 +112,6 @@
         <div id="category-selector" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar text-xs"></div>
       </div>
 
-      <!-- 第三層：抽取題數 -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
         <h2 class="text-sm font-bold text-slate-800 flex items-center">
           <i class="fa-solid fa-list-ol mr-2 text-indigo-500"></i>3. 選擇抽題數量
@@ -132,7 +124,6 @@
         </div>
       </div>
 
-      <!-- 開始按鈕 -->
       <div class="space-y-2 pt-1">
         <button onclick="startExam(false)" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/30 active:scale-[0.98] transition flex items-center justify-center text-sm">
           <i class="fa-solid fa-stopwatch mr-2"></i>開始模擬考（計時評分）
@@ -174,8 +165,9 @@
           <button onclick="submitMultiAnswer()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition">確認送出此題答案</button>
         </div>
 
-        <div id="q-explanation" class="hidden mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
+        <div id="q-explanation" class="hidden mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
           <p class="font-bold text-slate-700" id="exp-status"></p>
+          <div id="exp-sarcasm" class="hidden p-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 font-bold text-[11px] leading-relaxed"></div>
           <p class="text-slate-500 text-[11px] leading-normal" id="exp-note"></p>
         </div>
       </div>
@@ -199,10 +191,17 @@
           <i class="fa-solid fa-trophy"></i>
         </div>
         <h2 class="text-lg font-black text-slate-800" id="result-title">測驗完成！</h2>
+        
         <div class="py-1">
           <span class="text-4xl font-black text-indigo-600" id="result-score">85</span>
           <span class="text-slate-400 text-xs">/ 100分</span>
         </div>
+
+        <!-- 結算幽默短評 -->
+        <div class="p-3 bg-indigo-50/80 rounded-xl border border-indigo-100 text-xs text-indigo-900 font-medium leading-relaxed" id="result-comment">
+          評語分析中...
+        </div>
+
         <div class="grid grid-cols-3 gap-2 pt-2 border-t text-xs">
           <div class="p-2 bg-slate-50 rounded-lg">
             <p class="text-slate-400 text-[10px]">總題數</p>
@@ -221,7 +220,7 @@
 
       <div class="space-y-2">
         <button onclick="switchTab('chart')" class="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-xs flex items-center justify-center">
-          <i class="fa-solid fa-chart-line mr-1.5"></i>查看成績進步曲線
+          <i class="fa-solid fa-chart-line mr-1.5"></i>查看成績曲線與毒舌講評
         </button>
         <button onclick="switchTab('config')" class="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold text-xs">
           再測驗一次
@@ -229,7 +228,7 @@
       </div>
     </div>
 
-    <!-- 5. 成績曲線頁面 -->
+    <!-- 5. 成績曲線與幽默總結頁面 -->
     <div id="view-chart" class="hidden space-y-4">
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
         <div class="flex items-center justify-between">
@@ -243,6 +242,16 @@
         </select>
       </div>
 
+      <!-- AI 幽默講評區 -->
+      <div class="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl space-y-1.5">
+        <div class="flex items-center text-xs font-black text-amber-900">
+          <i class="fa-solid fa-comment-dots mr-1.5 text-amber-600"></i>考官毒舌/幽默總評
+        </div>
+        <p id="chart-trend-comment" class="text-xs text-amber-950 font-medium leading-relaxed">
+          目前數據累積中，請多做幾回測驗！
+        </p>
+      </div>
+
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
         <div class="h-64 relative">
           <canvas id="scoreHistoryChart"></canvas>
@@ -251,7 +260,7 @@
       </div>
 
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
-        <h3 class="text-xs font-bold text-slate-700">最近測驗明細</h3>
+        <h3 class="text-xs font-bold text-slate-700">最近測驗明細與即時評語</h3>
         <div id="history-list" class="space-y-2 max-h-56 overflow-y-auto pr-1 custom-scrollbar text-xs"></div>
       </div>
     </div>
@@ -296,12 +305,12 @@
     let isInstantFeedback = false;
     let selectedCount = 10;
     let wrongBook = new Set();
+    let wrongStreakMap = {}; // 記錄每題連續答錯次數
     let bookmarks = new Set();
     let examHistory = [];
     let currentExamPoolName = "全題庫總複習";
     let chartInstance = null;
 
-    // 預設經典重點講義庫
     const presetLectures = [
       {
         pool: "甲種業務主管 (800題庫)",
@@ -366,6 +375,15 @@
       }
     ];
 
+    // 重複答錯專用吐槽清單
+    const repeatMistakeJokes = [
+      "⚠️ 警告！這題你已經掉進同一個坑裡好幾次了，跟這個錯誤選項是有簽長約嗎？",
+      "🚨 熟悉的題目最對味！你上次也是選錯這個，連選項都在為你鼓掌！",
+      "🤦‍♂️ 考官在螢幕後面笑了：這題是你的命中剋星無誤！快點筆記！",
+      "💡 建議將這題印出來貼在額頭上，下次再選錯要罰寫三遍囉！",
+      "🌪️ 這題的陷阱明明插滿了警示牌，你怎麼還是踩得這麼瀟灑？"
+    ];
+
     function getPoolName(cat = "") {
       if (cat.includes("共同科目") || cat.includes("90006")) return "職安共同科目 (90006)";
       if (cat.includes("工作倫理") || cat.includes("道德") || cat.includes("90007")) return "工作倫理與道德 (90007)";
@@ -408,6 +426,9 @@
       const savedWrong = localStorage.getItem('osh_wrong_ids');
       if (savedWrong) { try { wrongBook = new Set(JSON.parse(savedWrong)); } catch(e) { wrongBook = new Set(); } }
 
+      const savedStreak = localStorage.getItem('osh_wrong_streak');
+      if (savedStreak) { try { wrongStreakMap = JSON.parse(savedStreak); } catch(e) { wrongStreakMap = {}; } }
+
       const savedBM = localStorage.getItem('osh_bookmarks');
       if (savedBM) { try { bookmarks = new Set(JSON.parse(savedBM)); } catch(e) { bookmarks = new Set(); } }
 
@@ -418,6 +439,7 @@
     function saveStorage() {
       localStorage.setItem('osh_q_db', JSON.stringify(allQuestions));
       localStorage.setItem('osh_wrong_ids', JSON.stringify(Array.from(wrongBook)));
+      localStorage.setItem('osh_wrong_streak', JSON.stringify(wrongStreakMap));
       localStorage.setItem('osh_bookmarks', JSON.stringify(Array.from(bookmarks)));
       localStorage.setItem('osh_exam_history', JSON.stringify(examHistory));
     }
@@ -433,7 +455,6 @@
       }
     }
 
-    // 渲染講義卡片
     function renderLectures() {
       const selectVal = document.getElementById('lecture-pool-select').value;
       const container = document.getElementById('lecture-cards-container');
@@ -443,7 +464,6 @@
         : presetLectures.filter(l => l.pool === selectVal);
 
       container.innerHTML = filtered.map(lec => {
-        // 計算該講義主題下題庫有多少題
         const qCount = allQuestions.filter(q => q.cat && (lec.title.includes(q.cat) || q.cat.includes(lec.title.slice(0,4)))).length || 20;
 
         return `
@@ -466,7 +486,6 @@
       }).join('');
     }
 
-    // 從講義一鍵進入刷題
     function startLecturePractice(poolName) {
       switchTab('config');
       document.querySelectorAll('input[name="pool-cb"]').forEach(cb => cb.checked = (cb.value === poolName));
@@ -667,6 +686,8 @@
       }).join('');
 
       const expBox = document.getElementById('q-explanation');
+      const sarcasmBox = document.getElementById('exp-sarcasm');
+      
       if (isInstantFeedback && answered !== undefined) {
         expBox.classList.remove('hidden');
         let isCorrect = false;
@@ -685,6 +706,16 @@
         document.getElementById('exp-status').innerHTML = isCorrect 
           ? `<span class="text-emerald-700 font-bold">✅ 回答正確！正解為 (${ansLabel})</span>`
           : `<span class="text-rose-700 font-bold">❌ 回答錯誤！您的選擇：【${userText}】➔ 正確解答：【${correctText}】</span>`;
+
+        // 重複選錯專屬諷刺評語
+        const streak = wrongStreakMap[q.id] || 0;
+        if (!isCorrect && streak >= 2) {
+          sarcasmBox.classList.remove('hidden');
+          const randomJoke = repeatMistakeJokes[Math.floor(Math.random() * repeatMistakeJokes.length)];
+          sarcasmBox.innerHTML = `${randomJoke} <span class="text-rose-600 block mt-0.5">（累計二度踩雷第 ${streak} 次）</span>`;
+        } else {
+          sarcasmBox.classList.add('hidden');
+        }
 
         let tip = q.exp || "";
         if (!tip) {
@@ -714,8 +745,13 @@
         loadQuestion(currentIndex);
       } else {
         userAnswers[currentIndex] = num;
-        if (num !== q.ans) wrongBook.add(q.id);
-        else wrongBook.delete(q.id);
+        if (num !== q.ans) {
+          wrongBook.add(q.id);
+          wrongStreakMap[q.id] = (wrongStreakMap[q.id] || 0) + 1;
+        } else {
+          wrongBook.delete(q.id);
+          wrongStreakMap[q.id] = 0;
+        }
         saveStorage();
         updateStats();
         loadQuestion(currentIndex);
@@ -728,8 +764,13 @@
       userAnswers[currentIndex] = [...multiDraft];
       
       const isCorrect = JSON.stringify([...multiDraft].sort()) === JSON.stringify([...q.ans].sort());
-      if (!isCorrect) wrongBook.add(q.id);
-      else wrongBook.delete(q.id);
+      if (!isCorrect) {
+        wrongBook.add(q.id);
+        wrongStreakMap[q.id] = (wrongStreakMap[q.id] || 0) + 1;
+      } else {
+        wrongBook.delete(q.id);
+        wrongStreakMap[q.id] = 0;
+      }
 
       saveStorage();
       updateStats();
@@ -770,6 +811,25 @@
       loadQuestion(currentIndex);
     }
 
+    // 產生幽默結算評語
+    function generateHumorComment(score, prevScore) {
+      if (score === 100) return "🌟 滿分封神！勞動檢查員看到你都要起立敬禮，可以直接去考場當監考官了！";
+      
+      if (prevScore !== null) {
+        const diff = score - prevScore;
+        if (diff >= 20) return `🚀 暴風式進步 +${diff} 分！看來剛剛偷偷灌頂了職安真經，這個氣勢誰也擋不住！`;
+        if (diff > 0) return `📈 小幅攀升 +${diff} 分！穩扎穩打，及格證書已經在向你招手了！`;
+        if (diff <= -20) return `📉 暴跌 ${diff} 分！等等，這條曲線怎麼像高處墜落一樣刺激？安全帶扣好了沒？快去複習！`;
+        if (diff < 0) return `📉 稍微倒退嚕 ${diff} 分～是不是被剛剛的題目偷襲了？別慌，喝口水再戰一回！`;
+      }
+
+      if (score >= 80) return "🔥 實力堅強！這分數穩過及格線，只要保持平常心，證照就是你的囊中物！";
+      if (score >= 60) return "🎉 壓線及格！雖然驚險但及格就是王道，恭喜拿到通關入場券！";
+      if (score >= 40) return "👀 距離及格還差一腳！請把錯題本當作你的早午晚餐，多啃兩次就過了！";
+      return "🚑 嗶嗶嗶！現場發出職災警報，此分數需要立刻進加護病房急救，快把講義從頭看一遍！";
+    }
+
+    // 交卷並記錄成績歷史
     function finishExam() {
       clearInterval(examTimer);
       let correct = 0;
@@ -785,13 +845,17 @@
       });
 
       const score = Math.round((correct / currentPool.length) * 100);
+      const prevRecord = examHistory.length > 0 ? examHistory[examHistory.length - 1] : null;
+      const prevScore = prevRecord ? prevRecord.score : null;
+      const humorComment = generateHumorComment(score, prevScore);
 
       const record = {
         date: new Date().toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
         pool: currentExamPoolName,
         score: score,
         total: currentPool.length,
-        correct: correct
+        correct: correct,
+        comment: humorComment
       };
       examHistory.push(record);
       saveStorage();
@@ -803,6 +867,7 @@
       document.getElementById('res-total').innerText = currentPool.length;
       document.getElementById('res-correct').innerText = correct;
       document.getElementById('res-wrong').innerText = currentPool.length - correct;
+      document.getElementById('result-comment').innerText = humorComment;
 
       if (score >= 60) {
         document.getElementById('result-title').innerText = "🎉 測驗及格！保持節奏！";
@@ -834,6 +899,28 @@
       const filteredRecords = filter === "ALL" 
         ? examHistory 
         : examHistory.filter(r => r.pool === filter);
+
+      // 動態分析趨勢幽默總評
+      const trendCommentEl = document.getElementById('chart-trend-comment');
+      if (filteredRecords.length === 0) {
+        trendCommentEl.innerText = "目前尚無資料，快去測驗幾回，考官已經準備好毒舌講評了！";
+      } else if (filteredRecords.length === 1) {
+        trendCommentEl.innerText = `第一戰得分 ${filteredRecords[0].score} 分！初生之犢不畏虎，多刷幾回看曲線怎麼飆！`;
+      } else {
+        const lastScore = filteredRecords[filteredRecords.length - 1].score;
+        const firstScore = filteredRecords[0].score;
+        const avgScore = Math.round(filteredRecords.reduce((a,b) => a + b.score, 0) / filteredRecords.length);
+        
+        if (lastScore >= 80 && avgScore >= 75) {
+          trendCommentEl.innerText = `📊 平均得分 ${avgScore} 分！這曲線穩如泰山，基本上已經具備閉著眼睛答題的實力了！`;
+        } else if (lastScore > firstScore) {
+          trendCommentEl.innerText = `📈 從最初的 ${firstScore} 分進步到 ${lastScore} 分！進步幅度肉眼可見，請收下我的膝蓋！`;
+        } else if (lastScore < firstScore) {
+          trendCommentEl.innerText = `📉 曲線似乎在走下坡（${firstScore} ➔ ${lastScore} 分），是不是最近都在偷懶？快把安全帽戴好重新出發！`;
+        } else {
+          trendCommentEl.innerText = `⚖️ 分數呈現心電圖平穩狀態（均分 ${avgScore}），是時候突破舒適圈挑戰 90 分了！`;
+        }
+      }
 
       const labels = filteredRecords.map((r, idx) => `#${idx + 1} (${r.date.split(' ')[0]})`);
       const scores = filteredRecords.map(r => r.score);
@@ -893,12 +980,13 @@
       }
 
       listContainer.innerHTML = [...filteredRecords].reverse().map(r => `
-        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-          <div>
+        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+          <div class="flex items-center justify-between">
             <p class="font-bold text-slate-700">${r.pool}</p>
-            <p class="text-[10px] text-slate-400 mt-0.5">${r.date} ｜ 抽考 ${r.total} 題 (答對 ${r.correct} 題)</p>
+            <span class="text-sm font-black ${r.score >= 60 ? 'text-emerald-600' : 'text-rose-600'}">${r.score} 分</span>
           </div>
-          <span class="text-sm font-black ${r.score >= 60 ? 'text-emerald-600' : 'text-rose-600'}">${r.score} 分</span>
+          <p class="text-[10px] text-slate-400">${r.date} ｜ 抽考 ${r.total} 題 (答對 ${r.correct} 題)</p>
+          <p class="text-[11px] text-amber-800 bg-amber-50/60 p-1.5 rounded-lg font-medium">${r.comment || '測驗完成！'}</p>
         </div>
       `).join('');
     }
