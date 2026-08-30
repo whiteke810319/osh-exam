@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>職安業務主管與技術士 智能題庫模擬考系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body { -webkit-tap-highlight-color: transparent; }
@@ -665,10 +666,13 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
+        // 切換分頁
     function switchTab(tab) {
-      ['config', 'exam', 'result', 'import', 'search'].forEach(v => {
-        document.getElementById(`view-${v}`).classList.add('hidden');
+      ['config', 'exam', 'result', 'chart', 'import', 'search'].forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        if (el) el.classList.add('hidden');
       });
+      
       document.querySelectorAll('header .grid button').forEach(b => {
         b.className = "py-2.5 text-indigo-200 hover:text-white";
       });
@@ -679,12 +683,127 @@ window.addEventListener('DOMContentLoaded', async () => {
       if (tab === 'config') document.getElementById('view-config').classList.remove('hidden');
       if (tab === 'import') document.getElementById('view-import').classList.remove('hidden');
       if (tab === 'search') document.getElementById('view-search').classList.remove('hidden');
+      
+      if (tab === 'chart') {
+        document.getElementById('view-chart').classList.remove('hidden');
+        populateChartFilter();
+        setTimeout(renderScoreChart, 50); // 確保畫面渲染後載入圖表
+      }
+      
       if (tab === 'practice') {
-        if (allQuestions.length === 0) {
-          alert('目前無題目！');
-          switchTab('config');
-          return;
+        if (allQuestions.length === 0) { alert('目前無題目！'); switchTab('config'); return; }
+        currentPool = [...allQuestions];
+        currentIndex = 0;
+        userAnswers = {};
+        isInstantFeedback = true;
+        currentExamPoolName = "順序全題庫練習";
+        document.getElementById('view-exam').classList.remove('hidden');
+        document.getElementById('exam-mode-badge').innerText = '順序練習';
+        document.getElementById('timer-box').classList.add('hidden');
+        renderPalette();
+        loadQuestion(0);
+      }
+      
+      if (tab === 'wrong') {
+        const wrongQs = allQuestions.filter(q => wrongBook.has(q.id));
+        if (wrongQs.length === 0) { alert('太棒了！目前錯題本空空如也！'); switchTab('config'); return; }
+        currentPool = wrongQs;
+        currentIndex = 0;
+        userAnswers = {};
+        isInstantFeedback = true;
+        currentExamPoolName = "錯題特訓複習";
+        document.getElementById('view-exam').classList.remove('hidden');
+        document.getElementById('exam-mode-badge').innerText = '錯題特訓';
+        document.getElementById('timer-box').classList.add('hidden');
+        renderPalette();
+        loadQuestion(0);
+      }
+    }
+
+    // 渲染成績曲線圖表
+    function renderScoreChart() {
+      const selectEl = document.getElementById('chart-filter-pool');
+      const filter = selectEl ? selectEl.value : "ALL";
+      
+      const filteredRecords = filter === "ALL" 
+        ? examHistory 
+        : examHistory.filter(r => r.pool === filter);
+
+      const labels = filteredRecords.map((r, idx) => `#${idx + 1} (${r.date.split(' ')[0]})`);
+      const scores = filteredRecords.map(r => r.score);
+
+      const canvas = document.getElementById('scoreHistoryChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      if (typeof Chart === 'undefined') {
+        alert('圖表套件載入中，請重新整理頁面');
+        return;
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels.length > 0 ? labels : ['尚未有測驗紀錄'],
+          datasets: [
+            {
+              label: '測驗得分 (分)',
+              data: scores.length > 0 ? scores : [0],
+              borderColor: '#4f46e5',
+              backgroundColor: 'rgba(79, 70, 229, 0.1)',
+              borderWidth: 3,
+              pointBackgroundColor: scores.map(s => s >= 60 ? '#10b981' : '#f43f5e'),
+              pointRadius: 5,
+              fill: true,
+              tension: 0.3
+            },
+            {
+              label: '及格標準 (60分)',
+              data: new Array(labels.length || 1).fill(60),
+              borderColor: '#f43f5e',
+              borderWidth: 1.5,
+              borderDash: [5, 5],
+              pointRadius: 0,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { min: 0, max: 100, ticks: { stepSize: 20 } }
+          },
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
+          }
         }
+      });
+
+      // 歷史清單渲染
+      const listContainer = document.getElementById('history-list');
+      if (!listContainer) return;
+      
+      if (filteredRecords.length === 0) {
+        listContainer.innerHTML = '<p class="text-slate-400 py-3 text-center">目前尚無此題庫測驗紀錄，快去測驗一回吧！</p>';
+        return;
+      }
+
+      listContainer.innerHTML = [...filteredRecords].reverse().map(r => `
+        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+          <div>
+            <p class="font-bold text-slate-700">${r.pool}</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">${r.date} ｜ 抽考 ${r.total} 題 (答對 ${r.correct} 題)</p>
+          </div>
+          <span class="text-sm font-black ${r.score >= 60 ? 'text-emerald-600' : 'text-rose-600'}">${r.score} 分</span>
+        </div>
+      `).join('');
+    }
+
         currentPool = [...allQuestions];
         currentIndex = 0;
         userAnswers = {};
