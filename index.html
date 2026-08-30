@@ -197,7 +197,6 @@
           <span class="text-slate-400 text-xs">/ 100分</span>
         </div>
 
-        <!-- 結算幽默短評 -->
         <div class="p-3 bg-indigo-50/80 rounded-xl border border-indigo-100 text-xs text-indigo-900 font-medium leading-relaxed" id="result-comment">
           評語分析中...
         </div>
@@ -242,7 +241,6 @@
         </select>
       </div>
 
-      <!-- AI 幽默講評區 -->
       <div class="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl space-y-1.5">
         <div class="flex items-center text-xs font-black text-amber-900">
           <i class="fa-solid fa-comment-dots mr-1.5 text-amber-600"></i>考官毒舌/幽默總評
@@ -305,77 +303,152 @@
     let isInstantFeedback = false;
     let selectedCount = 10;
     let wrongBook = new Set();
-    let wrongStreakMap = {}; // 記錄每題連續答錯次數
+    let wrongStreakMap = {};
     let bookmarks = new Set();
     let examHistory = [];
     let currentExamPoolName = "全題庫總複習";
     let chartInstance = null;
 
+    // 12大主題 超完整高頻考點精萃講義庫
     const presetLectures = [
       {
         pool: "甲種業務主管 (800題庫)",
         title: "企業經營風險與安全衛生（組織協調與溝通）",
         points: [
           "有效溝通四原則：<span class='lecture-hl'>設身處地、心胸開放、就事論事</span>——固執己見是溝通的反面。",
-          "馬斯洛需求層級（低→高）：<span class='lecture-tag'>生理→安全→愛→尊嚴→自我實現</span>。",
-          "溝通模式流程：傳送者 → 編碼 → 管道 → 解碼 → 接收者。環境干擾會造成傳送障礙。",
-          "職業道德核心要求：<span class='lecture-hl'>合法性</span>。",
-          "洩漏公司機密資料屬刑法<span class='lecture-hl'>背信罪</span>。",
-          "安全衛生教育訓練適當時機：組織/職掌變更、士氣低落意外頻傳、增辦新業務——<span class='lecture-hl'>薪資調整非其時機</span>。",
-          "安全衛生管理計畫須運用 <span class='lecture-tag'>P-D-C-A</span>（規劃、實施、查核、改進）循環。"
+          "馬斯洛需求層級（低→高）：<span class='lecture-tag'>生理→安全→愛與歸屬→尊嚴→自我實現</span>。",
+          "溝通模式五要素：<span class='lecture-hl'>傳送者 → 編碼 → 管道 → 解碼 → 接收者</span>，噪音/環境干擾會造成傳送障礙。",
+          "職業道德核心要求：<span class='lecture-hl'>合法性</span>。洩漏業務秘密或公司機密資料屬刑法<span class='lecture-hl'>背信罪</span>。",
+          "安全衛生教育訓練適當時機：組織/職掌變更、士氣低落意外頻傳、增辦新業務、法規修改——<span class='lecture-hl'>薪資調整絕非其時機</span>。",
+          "安全衛生管理計畫須遵循 <span class='lecture-tag'>P-D-C-A</span>（規劃、實施、查核、改進）循環持續改善。"
         ]
       },
       {
         pool: "甲種業務主管 (800題庫)",
         title: "職業安全衛生相關法規核心考點",
         points: [
-          "重大職業災害通報時限：死亡或罹災3人以上須於 <span class='lecture-hl'>8 小時內</span> 通報勞動檢查機構。",
-          "職業安全衛生委員會：委員人數在 <span class='lecture-hl'>7 人以上</span>，勞工代表應佔 <span class='lecture-hl'>1/3 以上</span>。",
-          "勞工健康檢查紀錄保存：一般健檢保存 <span class='lecture-hl'>7 年</span>，特殊健康檢查紀錄至少保存 <span class='lecture-hl'>10~30 年</span>。",
-          "第一類事業單位勞工人數達 <span class='lecture-hl'>100 人以上</span> 應設專責一級職安管理單位。"
+          "重大職業災害通報時限：發生死亡災害、罹災人數在 <span class='lecture-hl'>3 人以上</span>，或 <span class='lecture-hl'>1 人以上需住院治療</span> 者，雇主應於 <span class='lecture-hl'>8 小時內</span> 通報勞動檢查機構[span_0](start_span)[span_0](end_span)。",
+          "重大職災現場保全：未經司法機關或 <span class='lecture-hl'>勞動檢查機構</span> 許可，不得移動或破壞現場[span_1](start_span)[span_1](end_span)。",
+          "事業單位僱用勞工人數在 <span class='lecture-hl'>30 人以上</span> 者，應訂立安全衛生工作守則，會同勞工代表訂定並報經勞檢機構備查後公告實施[span_2](start_span)[span_2](end_span)。",
+          "第一類事業勞工人數達 <span class='lecture-hl'>100 人以上</span> 應設專責一級職安管理單位；達 <span class='lecture-hl'>300 人以上</span> 應建置 OSHMS (TOSHMS) 管理系統。",
+          "職安委員會：委員人數在 <span class='lecture-hl'>7 人以上</span>，勞工代表應佔 <span class='lecture-hl'>1/3 以上</span>，且應每 <span class='lecture-hl'>3 個月</span> 至少開會 1 次。",
+          "安全衛生教育訓練：新僱勞工或在職勞工變更工作前，一般安全衛生教育訓練不得少於 <span class='lecture-hl'>3 小時</span>[span_3](start_span)[span_3](end_span)；業務主管回訓每 <span class='lecture-hl'>2 年至少 6 小時</span>。"
+        ]
+      },
+      {
+        pool: "甲種業務主管 (800題庫)",
+        title: "職業安全衛生管理與稽核要點",
+        points: [
+          "安全觀察重點：針對「人員行為」實施，觀察重點在於發現並即時矯正 <span class='lecture-hl'>不安全動作</span>。",
+          "自動檢查分類：包含 <span class='lecture-hl'>定期檢查、重點檢查、作業檢點</span>，相關紀錄至少應保存 <span class='lecture-hl'>3 年</span>。",
+          "事故調查首要目的：<span class='lecture-hl'>找出事故真正原因並防止再發</span>，絕非為了追究個人責任與處罰。",
+          "失能傷害頻率 (FR)：每百萬經歷工時之失能傷害人次數；失能傷害嚴重率 (SR)：每百萬經歷工時之損失日數。",
+          "死亡與永久全失能損失日數：依規定均以 <span class='lecture-hl'>6,000 日</span> 計算；受傷當日與復工當日不計入損失日數。"
+        ]
+      },
+      {
+        pool: "甲種業務主管 (800題庫)",
+        title: "常見物理、化學及作業環境危害預防",
+        points: [
+          "墜落防護高度：高度在 <span class='lecture-hl'>2 公尺以上</span> 之開口部分、作業邊緣，應設護欄、護蓋或安全網[span_4](start_span)[span_4](end_span)。",
+          "營造開挖防護：露天開挖垂直深度達 <span class='lecture-hl'>1.5 公尺以上</span>，即應設置擋土支撐。",
+          "合梯規定：梯腳與地面角度應在 <span class='lecture-hl'>75 度以內</span>，梯腳間應設堅固金屬扣環或繫材[span_5](start_span)[span_5](end_span)。",
+          "高壓活線作業安全距離：低壓活線前方最小工作空間為 <span class='lecture-hl'>90 公分</span>；高壓活線身側 <span class='lecture-hl'>60 公分以內</span> 應加裝絕緣遮蔽裝備。",
+          "缺氧場所定義：空氣中氧氣濃度未滿 <span class='lecture-hl'>18%</span>；局限空間硫化氫濃度不得超過 <span class='lecture-hl'>10 ppm</span>。",
+          "化學品標示與 SDS：安全資料表包含 <span class='lecture-hl'>16 大項</span>，每 <span class='lecture-hl'>3 年</span> 應至少檢討檢視 1 次內容正確性。"
         ]
       },
       {
         pool: "甲級職業安全管理 (22000)",
-        title: "機械安全防護與作業管制",
+        title: "機械設備本質安全與防護設施",
         points: [
-          "合梯規定：梯腳與地面夾角應在 <span class='lecture-hl'>75度以內</span>，兩梯腳間應有金屬繫材扣牢。",
-          "開口防墜設施：高度在 <span class='lecture-hl'>2 公尺以上</span> 之開口應設護欄、護蓋或安全網。",
-          "露天垂直開挖深度達 <span class='lecture-hl'>1.5 公尺以上</span> 者應設置擋土支撐。",
-          "高壓活線作業：接近電路作業距離身側 <span class='lecture-hl'>60 公分以內</span> 應裝設絕緣防護裝備。"
+          "木材加工圓盤鋸：反撥預防裝置厚度應為鋸片厚度 <span class='lecture-hl'>1.1 倍以上</span>，並設鋸齒接觸預防裝置（護罩）。",
+          "動力衝剪機械防護：安全模在上死點之間隙應在 <span class='lecture-hl'>8 mm 以下</span>；雙手操作按鈕外側間距需大於 <span class='lecture-hl'>300 mm</span>。",
+          "研磨機使用規範：更換研磨輪後應試轉 <span class='lecture-hl'>3 分鐘以上</span>（每日作業前試轉 1 分鐘），嚴禁超速運轉，除側用外不得使用側面研磨。",
+          "吊掛鋼索報廢標準：一撚間斷線達 <span class='lecture-hl'>10% 以上</span>、直徑磨損減少公稱直徑 <span class='lecture-hl'>7% 以上</span>、有顯著變形或扭結者禁止使用。",
+          "吊鏈報廢標準：延伸長度超過原長 <span class='lecture-hl'>5% 以上</span>，或斷面直徑減少超過 <span class='lecture-hl'>10% 以上</span> 者即應淘汰。"
+        ]
+      },
+      {
+        pool: "甲級職業安全管理 (22000)",
+        title: "系統安全分析與風險評估技術",
+        points: [
+          "初步危害分析 (PHA)：主要用於系統設計或規劃初期階段，識別重大潛在危害。",
+          "故障樹分析 (FTA)：採用「由上而下 (Top-down)」的演繹法分析邏輯閘；AND 閘表示條件同時發生；OR 閘表示任一條件發生即觸發。",
+          "事件樹分析 (ETA)：採用「由左至右、由因至果」的歸納演繹法，常用於連鎖失誤評估。",
+          "危害及可操作性分析 (HAZOP)：使用「引導詞 (Guide words)」搭配節點進行製程偏差探討。",
+          "本質安全設計優先原則：消除危害 → 替代危害 → 工程控制（隔離/連鎖）→ 行政管理 → 個人防護具。"
         ]
       },
       {
         pool: "甲級職業衛生管理 (22100)",
-        title: "職業衛生與環境監測要點",
+        title: "職業衛生與人因工程危害控制",
         points: [
-          "局限空間缺氧定義：空氣中氧氣濃度未滿 <span class='lecture-hl'>18%</span> 稱之為缺氧。",
-          "噪音作業標準：8小時日時量平均音壓級達 <span class='lecture-hl'>85 分貝以上</span> 為特別危害健康作業，不得暴露於超過 115 dBA 連續噪音。",
-          "正壓供氣式呼吸防護具 (SCBA)：適用於缺氧或立即致危 (IDLH) 之環境。",
-          "局部排氣裝置：每年應定期實施自動檢查 1 次。"
+          "噪音管制標準：工作日 8 小時日時量平均音壓級達 <span class='lecture-hl'>85 dBA 以上</span> 為特危作業；任何時間不得暴露於超過 <span class='lecture-hl'>115 dBA</span> 之連續性噪音或 <span class='lecture-hl'>140 dB</span> 衝擊性噪音。",
+          "綜合溫度熱指數 (WBGT)：戶外有日曬公式為 <span class='lecture-tag'>0.7(自然濕球) + 0.2(黑球) + 0.1(乾球)</span>；黑球溫度主要代表 <span class='lecture-hl'>輻射熱</span> 效應。",
+          "局限空間防護具選用：缺氧或未知高濃度毒性環境，嚴禁使用濾毒罐防毒口罩，必須配戴 <span class='lecture-hl'>正壓自攜式呼吸器 (SCBA)</span> 或供氣式面罩。",
+          "手臂振動白指症 (雷諾氏症)：主因為長期操作衝擊式破碎機、氣動手工具等局部振動引起末梢神經及血管病變。",
+          "重複性肌肉骨骼傷病：常見腕道症候群（正中神經受壓迫），預防首重改善工作台高度與人因工學設計。"
+        ]
+      },
+      {
+        pool: "甲級職業衛生管理 (22100)",
+        title: "作業環境監測與工業通風技術",
+        points: [
+          "作業環境監測通報：雇主應於實施監測 <span class='lecture-hl'>15 日前</span> 將監測計畫通報主管機關；採樣後 <span class='lecture-hl'>45 日內</span> 將結果報告完成通報。",
+          "通風氣罩捕捉效率：外裝式氣罩開口加裝凸緣 (Flange) 最多可提升 <span class='lecture-hl'>25%</span> 之抽氣捕捉效率。",
+          "有機溶劑控制設施：最佳且優先之控制工程為 <span class='lecture-hl'>密閉設備</span>，其次為包圍式局部排氣裝置。",
+          "可呼吸性粉塵定義：能通過呼吸道進入人體肺泡氣體交換區之微粒，其 50% 截取粒徑約為 <span class='lecture-hl'>4 微米 (µm)</span>。",
+          "生物性危害感染控制：負壓隔離病房設計使病房內氣壓恆低於室外，迫使空氣由外向內單向流動。"
         ]
       },
       {
         pool: "職安共同科目 (90006)",
-        title: "共同科目：職場安全與法規基礎",
+        title: "勞動法規基礎與勞工保障",
         points: [
-          "基本工資：延長工時（加班費）不得計入基本工資核計。",
-          "勞工發生死亡職災，非經 <span class='lecture-hl'>勞動檢查機構</span> 許可不得移動或破壞現場。",
-          "消除職業病發生之最根本源頭管理對策為：<span class='lecture-hl'>改善作業環境</span>。"
+          "基本工資核計：平日正常工時報酬計入，<span class='lecture-hl'>加班費（延長工時工資）不得計入</span> 基本工資核算[span_6](start_span)[span_6](end_span)。",
+          "平均工資計算：計算事由發生當日前 <span class='lecture-hl'>6 個月內</span> 所得工資總額除以該期間之總日數[span_7](start_span)[span_7](end_span)。",
+          "工資清冊保存年限：雇主依法應置備勞工名卡與工資清冊，並應保存 <span class='lecture-hl'>5 年</span>[span_8](start_span)[span_8](end_span)。",
+          "工作規則訂立門檻：事業單位僱用勞工人數在 <span class='lecture-hl'>30 人以上</span> 者，應訂立工作規則並報主管機關核備後公開揭示[span_9](start_span)[span_9](end_span)。",
+          "正常工時與加班限制：每日正常工時不得超過 8 小時，每週不得超過 40 小時；正常工時連同延長工時每日不得超過 <span class='lecture-hl'>12 小時</span>[span_10](start_span)[span_10](end_span)；每月加班上限為 46 小時（經工會/勞資會議同意得放寬至單月 54 小時、每 3 個月 138 小時）。"
+        ]
+      },
+      {
+        pool: "職安共同科目 (90006)",
+        title: "職場安全、急救與環境改善常識",
+        points: [
+          "母性健康保護：指保護具生育能力女性勞工之胚胎發育、妊娠期母體健康及哺乳期幼兒健康，<span class='lecture-hl'>不包括經期紊亂</span>[span_11](start_span)[span_11](end_span)。",
+          "防範毒物食入人體：落實工作場所與食物隔離、嚴禁在毒物作業區進食飲水、勤洗手漱口[span_12](start_span)[span_12](end_span)。",
+          "消除職業病之源頭對策：最根本有效之源頭管制措施為 <span class='lecture-hl'>改善作業環境</span> 與消除發生源（個人防護具為最後一道防線）[span_13](start_span)[span_13](end_span)。",
+          "油污破布處置：沾染揮發性油脂或有機溶劑之廢棄抹布、紙屑，應密封蓋藏於 <span class='lecture-hl'>不燃性之金屬容器內</span> 以防自燃[span_14](start_span)[span_14](end_span)。",
+          "安全帽衝擊後處理：安全帽只要承受過巨大外力撞擊，即使外觀完好無損亦應 <span class='lecture-hl'>立即報廢淘汰</span>，不得繼續使用[span_15](start_span)[span_15](end_span)。",
+          "化學燒傷急救：立即使用 <span class='lecture-hl'>大量乾淨清水沖洗至少 15~30 分鐘以上</span>，不可塗抹油脂或私自酸鹼中和[span_16](start_span)[span_16](end_span)。"
         ]
       },
       {
         pool: "工作倫理與道德 (90007)",
-        title: "共同科目：工作倫理與個資法規",
+        title: "個人資料保護法與資訊安全",
         points: [
-          "個人資料保護法：多少人以上當事人提出告訴可進行團體訴訟：<span class='lecture-hl'>20 人以上</span>。",
-          "受雇人於職務上所完成之著作，若無特別約定，著作人為 <span class='lecture-hl'>受雇人</span>，著作財產權歸雇用人。",
-          "發明專利權保護年限為 <span class='lecture-hl'>20 年</span>。"
+          "個人資料定義：包含姓名、出生年月日、身分證字號、護照號碼、病歷、指紋等；<span class='lecture-hl'>個人綽號非屬法定個資</span>[span_17](start_span)[span_17](end_span)。",
+          "個資團體訴訟：受害當事人達 <span class='lecture-hl'>20 人以上</span> 提出告訴，即可委託合格公益團體提起團體訴訟[span_18](start_span)[span_18](end_span)。",
+          "行銷拒絕權利：非公務機關利用個資行銷時，當事人表示拒絕者應立即停止利用，違者最高可處 20 萬元罰鍰[span_19](start_span)[span_19](end_span)。",
+          "營業秘密要件：具有秘密性、具有實際或潛在之 <span class='lecture-hl'>經濟價值</span>，且所有人已採取 <span class='lecture-hl'>合理之保密措施</span>[span_20](start_span)[span_20](end_span)。",
+          "侵害營業秘密責任：需同時負擔民事損害賠償與刑事責任；故意侵害時法院最高得酌定損害額 <span class='lecture-hl'>3 倍</span> 之懲罰性賠償[span_21](start_span)[span_21](end_span)。"
+        ]
+      },
+      {
+        pool: "工作倫理與道德 (90007)",
+        title: "職場倫理、反貪腐與性別平權",
+        points: [
+          "智慧財產權年限：發明專利權保護年限為 <span class='lecture-hl'>20 年</span>[span_22](start_span)[span_22](end_span)；新型專利 10 年；設計專利 15 年。",
+          "職務著作權歸屬：受雇人職務上完成之著作，未特別約定時著作人為 <span class='lecture-hl'>受雇人</span>，著作財產權歸雇主享有[span_23](start_span)[span_23](end_span)。",
+          "公職人員利益衝突迴避：公職人員不得假借職權圖利關係人；關係人依法經公開公正之政府採購法程序得標者則不違法[span_24](start_span)[span_24](end_span)。",
+          "性別工作平等：僱用勞工達 <span class='lecture-hl'>30 人以上</span> 者，應訂定性騷擾防治措施、申訴及懲戒辦法並公開揭示[span_25](start_span)[span_25](end_span)。",
+          "菸害防制法規定：未滿 <span class='lecture-hl'>20 歲</span> 不得吸菸及購買菸品；全面禁止包含電子煙在內之各式類菸品[span_26](start_span)[span_26](end_span)。"
         ]
       }
     ];
 
-    // 重複答錯專用吐槽清單
     const repeatMistakeJokes = [
       "⚠️ 警告！這題你已經掉進同一個坑裡好幾次了，跟這個錯誤選項是有簽長約嗎？",
       "🚨 熟悉的題目最對味！你上次也是選錯這個，連選項都在為你鼓掌！",
@@ -707,7 +780,6 @@
           ? `<span class="text-emerald-700 font-bold">✅ 回答正確！正解為 (${ansLabel})</span>`
           : `<span class="text-rose-700 font-bold">❌ 回答錯誤！您的選擇：【${userText}】➔ 正確解答：【${correctText}】</span>`;
 
-        // 重複選錯專屬諷刺評語
         const streak = wrongStreakMap[q.id] || 0;
         if (!isCorrect && streak >= 2) {
           sarcasmBox.classList.remove('hidden');
@@ -811,7 +883,6 @@
       loadQuestion(currentIndex);
     }
 
-    // 產生幽默結算評語
     function generateHumorComment(score, prevScore) {
       if (score === 100) return "🌟 滿分封神！勞動檢查員看到你都要起立敬禮，可以直接去考場當監考官了！";
       
@@ -829,7 +900,6 @@
       return "🚑 嗶嗶嗶！現場發出職災警報，此分數需要立刻進加護病房急救，快把講義從頭看一遍！";
     }
 
-    // 交卷並記錄成績歷史
     function finishExam() {
       clearInterval(examTimer);
       let correct = 0;
@@ -900,7 +970,6 @@
         ? examHistory 
         : examHistory.filter(r => r.pool === filter);
 
-      // 動態分析趨勢幽默總評
       const trendCommentEl = document.getElementById('chart-trend-comment');
       if (filteredRecords.length === 0) {
         trendCommentEl.innerText = "目前尚無資料，快去測驗幾回，考官已經準備好毒舌講評了！";
