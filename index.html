@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>職安衛全能刷題庫</title>
+  <title>職安衛全能刷題與重點複習系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,6 +11,8 @@
     body { -webkit-tap-highlight-color: transparent; }
     .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .lecture-hl { color: #1e40af; font-weight: 700; }
+    .lecture-tag { background: #fef3c7; color: #92400e; padding: 1px 4px; border-radius: 4px; font-weight: 600; }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
@@ -29,9 +31,12 @@
       </div>
     </div>
 
-    <!-- 5大功能頁籤 -->
-    <div class="max-w-md mx-auto grid grid-cols-5 bg-indigo-700 text-[11px] text-center border-t border-indigo-500/30">
-      <button onclick="switchTab('config')" id="tab-config" class="py-2.5 font-bold text-white border-b-2 border-amber-400">
+    <!-- 6大功能頁籤 (包含複習講義) -->
+    <div class="max-w-md mx-auto grid grid-cols-6 bg-indigo-700 text-[10px] text-center border-t border-indigo-500/30">
+      <button onclick="switchTab('lecture')" id="tab-lecture" class="py-2.5 font-bold text-white border-b-2 border-amber-400">
+        <i class="fa-solid fa-book-bookmark block text-sm mb-0.5 text-amber-300"></i>複習講義
+      </button>
+      <button onclick="switchTab('config')" id="tab-config" class="py-2.5 text-indigo-200 hover:text-white">
         <i class="fa-solid fa-sliders block text-sm mb-0.5"></i>自選模考
       </button>
       <button onclick="switchTab('practice')" id="tab-practice" class="py-2.5 text-indigo-200 hover:text-white">
@@ -39,13 +44,13 @@
       </button>
       <button onclick="switchTab('wrong')" id="tab-wrong" class="py-2.5 text-indigo-200 hover:text-white relative">
         <i class="fa-solid fa-triangle-exclamation block text-sm mb-0.5"></i>錯題本
-        <span id="wrong-badge" class="hidden absolute top-1 right-2 px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[9px] scale-75">0</span>
+        <span id="wrong-badge" class="hidden absolute top-1 right-1 px-1 py-0.2 bg-rose-500 text-white rounded-full text-[8px]">0</span>
       </button>
       <button onclick="switchTab('chart')" id="tab-chart" class="py-2.5 text-indigo-200 hover:text-white">
         <i class="fa-solid fa-chart-line block text-sm mb-0.5"></i>成績曲線
       </button>
       <button onclick="switchTab('search')" id="tab-search" class="py-2.5 text-indigo-200 hover:text-white">
-        <i class="fa-solid fa-magnifying-glass block text-sm mb-0.5"></i>搜尋題庫
+        <i class="fa-solid fa-magnifying-glass block text-sm mb-0.5"></i>搜尋
       </button>
     </div>
   </header>
@@ -53,8 +58,31 @@
   <!-- 主內容容器 -->
   <main class="flex-1 max-w-md w-full mx-auto p-4 space-y-4 pb-20">
 
-    <!-- 1. 測驗設定與題庫選擇頁面 -->
-    <div id="view-config" class="space-y-4">
+    <!-- 1. 重點複習講義分頁 (NEW) -->
+    <div id="view-lecture" class="space-y-3">
+      <!-- 篩選題庫來源 -->
+      <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between gap-2">
+        <div class="flex items-center text-xs font-bold text-slate-700 shrink-0">
+          <i class="fa-solid fa-filter mr-1.5 text-indigo-500"></i>題庫講義
+        </div>
+        <select id="lecture-pool-select" onchange="renderLectures()" class="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-indigo-700 focus:outline-none">
+          <option value="ALL">📚 全部精選彙整講義</option>
+          <option value="甲種業務主管 (800題庫)">甲種業務主管 (800題庫)</option>
+          <option value="甲級職業安全管理 (22000)">甲級職業安全管理 (22000)</option>
+          <option value="甲級職業衛生管理 (22100)">甲級職業衛生管理 (22100)</option>
+          <option value="職安共同科目 (90006)">職安共同科目 (90006)</option>
+          <option value="工作倫理與道德 (90007)">工作倫理與道德 (90007)</option>
+        </select>
+      </div>
+
+      <!-- 講義卡片清單列表 -->
+      <div id="lecture-cards-container" class="space-y-3">
+        <!-- 動態渲染重點卡片 -->
+      </div>
+    </div>
+
+    <!-- 2. 測驗設定頁面 -->
+    <div id="view-config" class="hidden space-y-4">
       <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 p-4 rounded-2xl text-white shadow-md flex items-center justify-between">
         <div>
           <p class="text-xs text-indigo-200 font-medium">系統已載入題庫總數</p>
@@ -65,8 +93,8 @@
         </button>
       </div>
 
-      <!-- 第一層：選擇主要題庫來源 -->
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-2.5">
+      <!-- 第一層：選擇題庫大類 -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-bold text-slate-800 flex items-center">
             <i class="fa-solid fa-layer-group mr-2 text-indigo-500"></i>1. 選擇題庫大類
@@ -76,8 +104,8 @@
         <div id="pool-selector" class="space-y-1.5 text-xs"></div>
       </div>
 
-      <!-- 第二層：細項單元章節 -->
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-2.5">
+      <!-- 第二層：細項章節 -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-bold text-slate-800 flex items-center">
             <i class="fa-solid fa-tags mr-2 text-indigo-500"></i>2. 細部章節範圍
@@ -92,7 +120,7 @@
       </div>
 
       <!-- 第三層：抽取題數 -->
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
         <h2 class="text-sm font-bold text-slate-800 flex items-center">
           <i class="fa-solid fa-list-ol mr-2 text-indigo-500"></i>3. 選擇抽題數量
         </h2>
@@ -115,7 +143,7 @@
       </div>
     </div>
 
-    <!-- 2. 答題中畫面 -->
+    <!-- 3. 答題中畫面 -->
     <div id="view-exam" class="hidden space-y-4">
       <div class="bg-white px-4 py-3 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
         <div class="flex items-center space-x-2">
@@ -164,7 +192,7 @@
       </div>
     </div>
 
-    <!-- 3. 成績結算頁面 -->
+    <!-- 4. 成績結算頁面 -->
     <div id="view-result" class="hidden space-y-4">
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center space-y-3">
         <div id="result-icon" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-2xl bg-emerald-100 text-emerald-600">
@@ -201,7 +229,7 @@
       </div>
     </div>
 
-    <!-- 4. 成績曲線與歷史分析頁面 -->
+    <!-- 5. 成績曲線頁面 -->
     <div id="view-chart" class="hidden space-y-4">
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
         <div class="flex items-center justify-between">
@@ -210,7 +238,7 @@
           </h2>
           <button onclick="clearHistoryRecords()" class="text-[11px] text-rose-500 hover:underline">清空歷史紀錄</button>
         </div>
-        <select id="chart-filter-pool" onchange="renderScoreChart()" class="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <select id="chart-filter-pool" onchange="renderScoreChart()" class="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-indigo-700 focus:outline-none">
           <option value="ALL">🌟 全部題庫 (跨科總歷程)</option>
         </select>
       </div>
@@ -228,7 +256,7 @@
       </div>
     </div>
 
-    <!-- 5. 題庫庫存管理頁面 -->
+    <!-- 6. 題庫庫存管理頁面 -->
     <div id="view-import" class="hidden space-y-4">
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
         <h2 class="font-bold text-sm text-slate-800 flex items-center">
@@ -246,7 +274,7 @@
       </div>
     </div>
 
-    <!-- 6. 搜尋頁面 -->
+    <!-- 7. 搜尋頁面 -->
     <div id="view-search" class="hidden space-y-3">
       <div class="relative">
         <input type="text" id="search-input" oninput="handleSearch()" placeholder="輸入關鍵字檢索題目..." class="w-full py-3 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -272,6 +300,71 @@
     let examHistory = [];
     let currentExamPoolName = "全題庫總複習";
     let chartInstance = null;
+
+    // 預設經典重點講義庫
+    const presetLectures = [
+      {
+        pool: "甲種業務主管 (800題庫)",
+        title: "企業經營風險與安全衛生（組織協調與溝通）",
+        points: [
+          "有效溝通四原則：<span class='lecture-hl'>設身處地、心胸開放、就事論事</span>——固執己見是溝通的反面。",
+          "馬斯洛需求層級（低→高）：<span class='lecture-tag'>生理→安全→愛→尊嚴→自我實現</span>。",
+          "溝通模式流程：傳送者 → 編碼 → 管道 → 解碼 → 接收者。環境干擾會造成傳送障礙。",
+          "職業道德核心要求：<span class='lecture-hl'>合法性</span>。",
+          "洩漏公司機密資料屬刑法<span class='lecture-hl'>背信罪</span>。",
+          "安全衛生教育訓練適當時機：組織/職掌變更、士氣低落意外頻傳、增辦新業務——<span class='lecture-hl'>薪資調整非其時機</span>。",
+          "安全衛生管理計畫須運用 <span class='lecture-tag'>P-D-C-A</span>（規劃、實施、查核、改進）循環。"
+        ]
+      },
+      {
+        pool: "甲種業務主管 (800題庫)",
+        title: "職業安全衛生相關法規核心考點",
+        points: [
+          "重大職業災害通報時限：死亡或罹災3人以上須於 <span class='lecture-hl'>8 小時內</span> 通報勞動檢查機構。",
+          "職業安全衛生委員會：委員人數在 <span class='lecture-hl'>7 人以上</span>，勞工代表應佔 <span class='lecture-hl'>1/3 以上</span>。",
+          "勞工健康檢查紀錄保存：一般健檢保存 <span class='lecture-hl'>7 年</span>，特殊健康檢查紀錄至少保存 <span class='lecture-hl'>10~30 年</span>。",
+          "第一類事業單位勞工人數達 <span class='lecture-hl'>100 人以上</span> 應設專責一級職安管理單位。"
+        ]
+      },
+      {
+        pool: "甲級職業安全管理 (22000)",
+        title: "機械安全防護與作業管制",
+        points: [
+          "合梯規定：梯腳與地面夾角應在 <span class='lecture-hl'>75度以內</span>，兩梯腳間應有金屬繫材扣牢。",
+          "開口防墜設施：高度在 <span class='lecture-hl'>2 公尺以上</span> 之開口應設護欄、護蓋或安全網。",
+          "露天垂直開挖深度達 <span class='lecture-hl'>1.5 公尺以上</span> 者應設置擋土支撐。",
+          "高壓活線作業：接近電路作業距離身側 <span class='lecture-hl'>60 公分以內</span> 應裝設絕緣防護裝備。"
+        ]
+      },
+      {
+        pool: "甲級職業衛生管理 (22100)",
+        title: "職業衛生與環境監測要點",
+        points: [
+          "局限空間缺氧定義：空氣中氧氣濃度未滿 <span class='lecture-hl'>18%</span> 稱之為缺氧。",
+          "噪音作業標準：8小時日時量平均音壓級達 <span class='lecture-hl'>85 分貝以上</span> 為特別危害健康作業，不得暴露於超過 115 dBA 連續噪音。",
+          "正壓供氣式呼吸防護具 (SCBA)：適用於缺氧或立即致危 (IDLH) 之環境。",
+          "局部排氣裝置：每年應定期實施自動檢查 1 次。"
+        ]
+      },
+      {
+        pool: "職安共同科目 (90006)",
+        title: "共同科目：職場安全與法規基礎",
+        points: [
+          "基本工資：延長工時（加班費）不得計入基本工資核計。",
+          "勞工發生死亡職災，非經 <span class='lecture-hl'>勞動檢查機構</span> 許可不得移動或破壞現場。",
+          "消除職業病發生之最根本源頭管理對策為：<span class='lecture-hl'>改善作業環境</span>。"
+        ]
+      },
+      {
+        pool: "工作倫理與道德 (90007)",
+        title: "共同科目：工作倫理與個資法規",
+        points: [
+          "個人資料保護法：多少人以上當事人提出告訴可進行團體訴訟：<span class='lecture-hl'>20 人以上</span>。",
+          "受雇人於職務上所完成之著作，若無特別約定，著作人為 <span class='lecture-hl'>受雇人</span>，著作財產權歸雇用人。",
+          "發明專利權保護年限為 <span class='lecture-hl'>20 年</span>。"
+        ]
+      }
+    ];
 
     function getPoolName(cat = "") {
       if (cat.includes("共同科目") || cat.includes("90006")) return "職安共同科目 (90006)";
@@ -301,6 +394,7 @@
         }
       }
 
+      renderLectures();
       renderPoolSelectors();
       renderSubCategories();
       updateStats();
@@ -309,24 +403,16 @@
 
     function loadStorage() {
       const savedQ = localStorage.getItem('osh_q_db');
-      if (savedQ) {
-        try { allQuestions = JSON.parse(savedQ); } catch(e) { allQuestions = []; }
-      }
+      if (savedQ) { try { allQuestions = JSON.parse(savedQ); } catch(e) { allQuestions = []; } }
       
       const savedWrong = localStorage.getItem('osh_wrong_ids');
-      if (savedWrong) {
-        try { wrongBook = new Set(JSON.parse(savedWrong)); } catch(e) { wrongBook = new Set(); }
-      }
+      if (savedWrong) { try { wrongBook = new Set(JSON.parse(savedWrong)); } catch(e) { wrongBook = new Set(); } }
 
       const savedBM = localStorage.getItem('osh_bookmarks');
-      if (savedBM) {
-        try { bookmarks = new Set(JSON.parse(savedBM)); } catch(e) { bookmarks = new Set(); }
-      }
+      if (savedBM) { try { bookmarks = new Set(JSON.parse(savedBM)); } catch(e) { bookmarks = new Set(); } }
 
       const savedHist = localStorage.getItem('osh_exam_history');
-      if (savedHist) {
-        try { examHistory = JSON.parse(savedHist); } catch(e) { examHistory = []; }
-      }
+      if (savedHist) { try { examHistory = JSON.parse(savedHist); } catch(e) { examHistory = []; } }
     }
 
     function saveStorage() {
@@ -345,6 +431,48 @@
       } else {
         badge.classList.add('hidden');
       }
+    }
+
+    // 渲染講義卡片
+    function renderLectures() {
+      const selectVal = document.getElementById('lecture-pool-select').value;
+      const container = document.getElementById('lecture-cards-container');
+      
+      let filtered = selectVal === "ALL" 
+        ? presetLectures 
+        : presetLectures.filter(l => l.pool === selectVal);
+
+      container.innerHTML = filtered.map(lec => {
+        // 計算該講義主題下題庫有多少題
+        const qCount = allQuestions.filter(q => q.cat && (lec.title.includes(q.cat) || q.cat.includes(lec.title.slice(0,4)))).length || 20;
+
+        return `
+          <div class="bg-white rounded-2xl p-4 shadow-sm border-l-4 border-amber-500 border-t border-r border-b border-slate-200 space-y-3">
+            <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2">
+              <div>
+                <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">${lec.pool}</span>
+                <h3 class="text-sm font-black text-slate-800 mt-1">${lec.title}</h3>
+              </div>
+              <button onclick="startLecturePractice('${lec.pool}')" class="shrink-0 px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg text-[11px] font-bold transition flex items-center">
+                <span>${qCount} 題可練習</span>
+                <i class="fa-solid fa-arrow-right ml-1 text-[10px]"></i>
+              </button>
+            </div>
+            <ul class="space-y-2 text-xs text-slate-600 leading-relaxed list-disc list-inside">
+              ${lec.points.map(pt => `<li class="pl-1">${pt}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 從講義一鍵進入刷題
+    function startLecturePractice(poolName) {
+      switchTab('config');
+      document.querySelectorAll('input[name="pool-cb"]').forEach(cb => cb.checked = (cb.value === poolName));
+      renderSubCategories();
+      toggleAllSubCategories(true);
+      startExam(true);
     }
 
     function renderPoolSelectors() {
@@ -440,7 +568,10 @@
       currentIndex = 0;
       userAnswers = {};
 
-      ['config', 'result', 'chart', 'import', 'search'].forEach(v => document.getElementById(`view-${v}`).classList.add('hidden'));
+      ['lecture', 'config', 'result', 'chart', 'import', 'search'].forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        if (el) el.classList.add('hidden');
+      });
       document.getElementById('view-exam').classList.remove('hidden');
       document.getElementById('exam-mode-badge').innerText = instantMode ? '即時回饋' : '全真模考';
       
@@ -535,7 +666,6 @@
         `;
       }).join('');
 
-      // 錯誤診斷與解析渲染
       const expBox = document.getElementById('q-explanation');
       if (isInstantFeedback && answered !== undefined) {
         expBox.classList.remove('hidden');
@@ -712,10 +842,7 @@
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
-
+      if (chartInstance) chartInstance.destroy();
       if (typeof Chart === 'undefined') return;
 
       chartInstance = new Chart(ctx, {
@@ -785,7 +912,7 @@
     }
 
     function switchTab(tab) {
-      ['config', 'exam', 'result', 'chart', 'import', 'search'].forEach(v => {
+      ['lecture', 'config', 'exam', 'result', 'chart', 'import', 'search'].forEach(v => {
         const el = document.getElementById(`view-${v}`);
         if (el) el.classList.add('hidden');
       });
@@ -797,6 +924,10 @@
       const activeBtn = document.getElementById(`tab-${tab}`);
       if (activeBtn) activeBtn.className = "py-2.5 font-bold text-white border-b-2 border-amber-400";
 
+      if (tab === 'lecture') {
+        document.getElementById('view-lecture').classList.remove('hidden');
+        renderLectures();
+      }
       if (tab === 'config') document.getElementById('view-config').classList.remove('hidden');
       if (tab === 'import') document.getElementById('view-import').classList.remove('hidden');
       if (tab === 'search') document.getElementById('view-search').classList.remove('hidden');
@@ -847,6 +978,7 @@
           if (Array.isArray(parsed)) {
             allQuestions = parsed;
             saveStorage();
+            renderLectures();
             renderPoolSelectors();
             renderSubCategories();
             updateStats();
