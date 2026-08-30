@@ -162,12 +162,13 @@
         <div id="q-options" class="space-y-2.5 pt-1"></div>
 
         <div id="multi-submit-container" class="hidden pt-2">
-          <button onclick="submitMultiAnswer()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition">確認送出此題答案</button>
+          <button onclick="submitMultiAnswer()" id="btn-multi-submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition">確認送出此題答案</button>
         </div>
 
         <div id="q-explanation" class="hidden mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
           <p class="font-bold text-slate-700" id="exp-status"></p>
           <div id="exp-sarcasm" class="hidden p-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 font-bold text-[11px] leading-relaxed"></div>
+          <div id="exp-streak-status" class="p-1.5 rounded-lg bg-indigo-50 text-indigo-800 font-bold text-[11px]"></div>
           <p class="text-slate-500 text-[11px] leading-normal" id="exp-note"></p>
         </div>
       </div>
@@ -303,13 +304,13 @@
     let isInstantFeedback = false;
     let selectedCount = 10;
     let wrongBook = new Set();
-    let wrongStreakMap = {};
+    let wrongStreakMap = {}; // 記錄連續答錯次數 (用於諷刺評語)
+    let correctStreakMap = {}; // 記錄連續答對次數 (用於 2 次移除機制)
     let bookmarks = new Set();
     let examHistory = [];
     let currentExamPoolName = "全題庫總複習";
     let chartInstance = null;
 
-    // 12大主題 超完整高頻考點精萃講義庫
     const presetLectures = [
       {
         pool: "甲種業務主管 (800題庫)",
@@ -502,6 +503,9 @@
       const savedStreak = localStorage.getItem('osh_wrong_streak');
       if (savedStreak) { try { wrongStreakMap = JSON.parse(savedStreak); } catch(e) { wrongStreakMap = {}; } }
 
+      const savedCorrect = localStorage.getItem('osh_correct_streak');
+      if (savedCorrect) { try { correctStreakMap = JSON.parse(savedCorrect); } catch(e) { correctStreakMap = {}; } }
+
       const savedBM = localStorage.getItem('osh_bookmarks');
       if (savedBM) { try { bookmarks = new Set(JSON.parse(savedBM)); } catch(e) { bookmarks = new Set(); } }
 
@@ -513,6 +517,7 @@
       localStorage.setItem('osh_q_db', JSON.stringify(allQuestions));
       localStorage.setItem('osh_wrong_ids', JSON.stringify(Array.from(wrongBook)));
       localStorage.setItem('osh_wrong_streak', JSON.stringify(wrongStreakMap));
+      localStorage.setItem('osh_correct_streak', JSON.stringify(correctStreakMap));
       localStorage.setItem('osh_bookmarks', JSON.stringify(Array.from(bookmarks)));
       localStorage.setItem('osh_exam_history', JSON.stringify(examHistory));
     }
@@ -702,6 +707,8 @@
       currentIndex = index;
       const q = currentPool[index];
       const isMulti = isMultiQuestion(q);
+      const answered = userAnswers[index];
+      const isLocked = (isInstantFeedback && answered !== undefined); // 即時模式答過即鎖定
 
       document.getElementById('exam-progress').innerText = `${index + 1} / ${currentPool.length}`;
       document.getElementById('q-category').innerText = q.cat || '綜合';
@@ -716,12 +723,15 @@
       bmBtn.innerHTML = bookmarks.has(q.id) ? '<i class="fa-solid fa-bookmark text-amber-500"></i>' : '<i class="fa-regular fa-bookmark"></i>';
 
       const optContainer = document.getElementById('q-options');
-      const answered = userAnswers[index];
       const multiSubmitBox = document.getElementById('multi-submit-container');
 
       if (isMulti) {
         multiDraft = answered ? [...answered] : [];
-        multiSubmitBox.classList.remove('hidden');
+        if (!isLocked) {
+          multiSubmitBox.classList.remove('hidden');
+        } else {
+          multiSubmitBox.classList.add('hidden');
+        }
       } else {
         multiSubmitBox.classList.add('hidden');
       }
@@ -729,29 +739,32 @@
       optContainer.innerHTML = q.opt.map((optText, i) => {
         const optNum = i + 1;
         let optStyle = "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100";
+        let disabledAttr = isLocked ? "disabled" : "";
         
         if (!isMulti) {
           if (answered !== undefined) {
             if (isInstantFeedback) {
-              if (optNum === q.ans) optStyle = "bg-emerald-50 border-emerald-500 text-emerald-800 font-bold";
-              else if (optNum === answered) optStyle = "bg-rose-50 border-rose-500 text-rose-800";
+              if (optNum === q.ans) optStyle = "bg-emerald-50 border-emerald-500 text-emerald-800 font-bold cursor-not-allowed";
+              else if (optNum === answered) optStyle = "bg-rose-50 border-rose-500 text-rose-800 cursor-not-allowed";
+              else optStyle = "bg-slate-50 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed";
             } else {
               if (optNum === answered) optStyle = "bg-indigo-50 border-indigo-600 text-indigo-800 font-bold";
             }
           }
         } else {
-          const isSelected = multiDraft.includes(optNum);
-          if (answered !== undefined && isInstantFeedback) {
+          const isSelected = isLocked ? answered.includes(optNum) : multiDraft.includes(optNum);
+          if (isLocked) {
             const isCorrectOpt = q.ans.includes(optNum);
-            if (isCorrectOpt) optStyle = "bg-emerald-50 border-emerald-500 text-emerald-800 font-bold";
-            else if (isSelected) optStyle = "bg-rose-50 border-rose-500 text-rose-800";
+            if (isCorrectOpt) optStyle = "bg-emerald-50 border-emerald-500 text-emerald-800 font-bold cursor-not-allowed";
+            else if (isSelected) optStyle = "bg-rose-50 border-rose-500 text-rose-800 cursor-not-allowed";
+            else optStyle = "bg-slate-50 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed";
           } else {
             if (isSelected) optStyle = "bg-indigo-50 border-indigo-600 text-indigo-800 font-bold";
           }
         }
 
         return `
-          <button onclick="handleOptionClick(${optNum})" class="w-full p-3 rounded-xl border text-left text-xs sm:text-sm transition flex items-start space-x-2.5 ${optStyle}">
+          <button onclick="handleOptionClick(${optNum})" ${disabledAttr} class="w-full p-3 rounded-xl border text-left text-xs sm:text-sm transition flex items-start space-x-2.5 ${optStyle}">
             <span class="w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">${optNum}</span>
             <span class="leading-relaxed">${optText}</span>
           </button>
@@ -760,6 +773,7 @@
 
       const expBox = document.getElementById('q-explanation');
       const sarcasmBox = document.getElementById('exp-sarcasm');
+      const streakStatusBox = document.getElementById('exp-streak-status');
       
       if (isInstantFeedback && answered !== undefined) {
         expBox.classList.remove('hidden');
@@ -780,13 +794,33 @@
           ? `<span class="text-emerald-700 font-bold">✅ 回答正確！正解為 (${ansLabel})</span>`
           : `<span class="text-rose-700 font-bold">❌ 回答錯誤！您的選擇：【${userText}】➔ 正確解答：【${correctText}】</span>`;
 
-        const streak = wrongStreakMap[q.id] || 0;
-        if (!isCorrect && streak >= 2) {
+        // 連續答錯諷刺
+        const wrongStreak = wrongStreakMap[q.id] || 0;
+        if (!isCorrect && wrongStreak >= 2) {
           sarcasmBox.classList.remove('hidden');
           const randomJoke = repeatMistakeJokes[Math.floor(Math.random() * repeatMistakeJokes.length)];
-          sarcasmBox.innerHTML = `${randomJoke} <span class="text-rose-600 block mt-0.5">（累計二度踩雷第 ${streak} 次）</span>`;
+          sarcasmBox.innerHTML = `${randomJoke} <span class="text-rose-600 block mt-0.5">（累計二度踩雷第 ${wrongStreak} 次）</span>`;
         } else {
           sarcasmBox.classList.add('hidden');
+        }
+
+        // 錯題本進度提示（連續 2 次答對消除）
+        const curCorrectStreak = correctStreakMap[q.id] || 0;
+        if (wrongBook.has(q.id)) {
+          streakStatusBox.classList.remove('hidden');
+          if (isCorrect) {
+            streakStatusBox.innerHTML = `🎯 錯題本消除進度：連續答對 <strong>${curCorrectStreak} / 2</strong> 次！💪 再答對 1 次即可消除！`;
+            streakStatusBox.className = "p-2 rounded-lg bg-emerald-50 text-emerald-800 text-[11px] font-bold";
+          } else {
+            streakStatusBox.innerHTML = `⚠️ 答錯重置：連續答對次數歸零（0 / 2），題目繼續留在錯題本深造！`;
+            streakStatusBox.className = "p-2 rounded-lg bg-rose-50 text-rose-800 text-[11px] font-bold";
+          }
+        } else if (curCorrectStreak >= 2) {
+          streakStatusBox.classList.remove('hidden');
+          streakStatusBox.innerHTML = `🎉 太神啦！連續答對 2 次，已成功從錯題本中移除！`;
+          streakStatusBox.className = "p-2 rounded-lg bg-emerald-100 text-emerald-900 text-[11px] font-bold";
+        } else {
+          streakStatusBox.classList.add('hidden');
         }
 
         let tip = q.exp || "";
@@ -811,19 +845,19 @@
 
     function handleOptionClick(num) {
       const q = currentPool[currentIndex];
+      // 即時回饋模式下，若已作答過則完全鎖定不允許切換
+      if (isInstantFeedback && userAnswers[currentIndex] !== undefined) {
+        return;
+      }
+
       if (isMultiQuestion(q)) {
         if (multiDraft.includes(num)) multiDraft = multiDraft.filter(x => x !== num);
         else multiDraft.push(num);
         loadQuestion(currentIndex);
       } else {
         userAnswers[currentIndex] = num;
-        if (num !== q.ans) {
-          wrongBook.add(q.id);
-          wrongStreakMap[q.id] = (wrongStreakMap[q.id] || 0) + 1;
-        } else {
-          wrongBook.delete(q.id);
-          wrongStreakMap[q.id] = 0;
-        }
+        const isCorrect = (num === q.ans);
+        handleAnswerStreakEvaluation(q.id, isCorrect);
         saveStorage();
         updateStats();
         loadQuestion(currentIndex);
@@ -831,22 +865,36 @@
     }
 
     function submitMultiAnswer() {
+      if (isInstantFeedback && userAnswers[currentIndex] !== undefined) {
+        return;
+      }
       if (multiDraft.length === 0) { alert('請至少選擇一個選項！'); return; }
       const q = currentPool[currentIndex];
       userAnswers[currentIndex] = [...multiDraft];
       
       const isCorrect = JSON.stringify([...multiDraft].sort()) === JSON.stringify([...q.ans].sort());
-      if (!isCorrect) {
-        wrongBook.add(q.id);
-        wrongStreakMap[q.id] = (wrongStreakMap[q.id] || 0) + 1;
-      } else {
-        wrongBook.delete(q.id);
-        wrongStreakMap[q.id] = 0;
-      }
+      handleAnswerStreakEvaluation(q.id, isCorrect);
 
       saveStorage();
       updateStats();
       loadQuestion(currentIndex);
+    }
+
+    // 連續答對 2 次移除錯題本之核心邏輯
+    function handleAnswerStreakEvaluation(qid, isCorrect) {
+      if (isCorrect) {
+        wrongStreakMap[qid] = 0;
+        correctStreakMap[qid] = (correctStreakMap[qid] || 0) + 1;
+        
+        // 只有連續答對達 2 次時，才從錯題本正式移除
+        if (correctStreakMap[qid] >= 2) {
+          wrongBook.delete(qid);
+        }
+      } else {
+        wrongBook.add(qid);
+        wrongStreakMap[qid] = (wrongStreakMap[qid] || 0) + 1;
+        correctStreakMap[qid] = 0; // 答錯立刻重置答對次數為 0
+      }
     }
 
     function prevQuestion() { if (currentIndex > 0) loadQuestion(currentIndex - 1); }
