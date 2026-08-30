@@ -514,6 +514,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       }).join('');
 
       // 即時解析展示
+      // 升級版：動態解析與錯誤診斷
       const expBox = document.getElementById('q-explanation');
       if (isInstantFeedback && answered !== undefined) {
         expBox.classList.remove('hidden');
@@ -525,8 +526,30 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
 
         const ansLabel = isMulti ? q.ans.join('、') : q.ans;
-        document.getElementById('exp-status').innerText = isCorrect ? "✅ 回答正確！" : `❌ 回答錯誤，正確解答為 (${ansLabel})`;
-        document.getElementById('exp-status').className = isCorrect ? "font-bold text-emerald-700" : "font-bold text-rose-700";
+        const correctText = isMulti 
+          ? q.ans.map(i => `${i}. ${q.opt[i-1]}`).join('；') 
+          : `${q.ans}. ${q.opt[q.ans-1]}`;
+        const userText = isMulti 
+          ? (answered.length > 0 ? answered.map(i => `${i}. ${q.opt[i-1]}`).join('；') : '未選')
+          : (answered ? `${answered}. ${q.opt[answered-1]}` : '未選');
+
+        document.getElementById('exp-status').innerHTML = isCorrect 
+          ? `<span class="text-emerald-700 font-bold">✅ 回答正確！正解為 (${ansLabel})</span>`
+          : `<span class="text-rose-700 font-bold">❌ 回答錯誤！您的選擇：【${userText}】➔ 正確解答：【${correctText}】</span>`;
+
+        // 自動針對題目類別產生核心記憶要點
+        let tip = q.exp || "";
+        if (!tip) {
+          if (q.q.includes("法") || q.q.includes("規則") || q.q.includes("標準") || (q.cat && q.cat.includes("法規"))) {
+            tip = `【法規考點解析】：本題測驗法定強制標準，法規明文規定正確項目為「${correctText}」，其他選項非法定數值或權責主體。`;
+          } else if (q.q.includes("不") || q.q.includes("非") || q.q.includes("錯誤")) {
+            tip = `【否定題反向解析】：請注意題幹為否定句。只有「${correctText}」屬於不符合規定或錯誤的敘述，其餘三個選項皆為正確規範。`;
+          } else {
+            tip = `【核心觀念要點】：本題重點在於辨識「${q.cat || '專業科目'}」之標準作業流程，請牢記此題關鍵正解為「${correctText}」。`;
+          }
+        }
+
+        document.getElementById('exp-note').innerHTML = tip;
       } else {
         expBox.classList.add('hidden');
       }
