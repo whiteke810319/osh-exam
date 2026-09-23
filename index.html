@@ -723,7 +723,7 @@
     }
 
     function loadQuestion(index) {
-      currentIndex = index;
+currentIndex = index;
       const q = currentPool[index];
       const isMulti = isMultiQuestion(q);
       const answered = userAnswers[index];
@@ -739,13 +739,18 @@
       document.getElementById('q-text').innerText = `${index + 1}. ${q.q}`;
 
       const bmBtn = document.getElementById('btn-bookmark');
-      bmBtn.innerHTML = bookmarks.has(q.id) ? '<i class="fa-solid fa-bookmark text-amber-500"></i>' : '<i class="fa-regular fa-bookmark"></i>';
+      if (bmBtn) {
+        bmBtn.innerHTML = bookmarks.has(q.id) ? '<i class="fa-solid fa-bookmark text-amber-500"></i>' : '<i class="fa-regular fa-bookmark"></i>';
+      }
 
       const optContainer = document.getElementById('q-options');
       const multiSubmitBox = document.getElementById('multi-submit-container');
 
+      // 複選題草稿同步：未作答則維持暫存，已作答則載入歷史答案
       if (isMulti) {
-        multiDraft = answered ? [...answered] : [];
+        if (answered !== undefined) {
+          multiDraft = Array.isArray(answered) ? [...answered] : [answered];
+        }
         if (!isLocked) {
           multiSubmitBox.classList.remove('hidden');
         } else {
@@ -755,12 +760,15 @@
         multiSubmitBox.classList.add('hidden');
       }
 
+      // 渲染選項按鈕
       optContainer.innerHTML = q.opt.map((optText, i) => {
         const optNum = i + 1;
         let optStyle = "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100";
         let disabledAttr = isLocked ? "disabled" : "";
+        let iconBadge = `<span class="w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">${optNum}</span>`;
         
         if (!isMulti) {
+          // 單選題樣式
           if (answered !== undefined) {
             if (isInstantFeedback) {
               if (optNum === q.ans) optStyle = "bg-emerald-50 border-emerald-500 text-emerald-800 font-bold cursor-not-allowed";
@@ -771,25 +779,41 @@
             }
           }
         } else {
-          const isSelected = isLocked ? answered.includes(optNum) : multiDraft.includes(optNum);
+          // 複選題樣式
+          const isSelected = isLocked 
+            ? (Array.isArray(answered) && answered.includes(optNum))
+            : multiDraft.includes(optNum);
+
           if (isLocked) {
-            const isCorrectOpt = q.ans.includes(optNum);
-            if (isCorrectOpt) optStyle = "bg-emerald-50 border-emerald-500 text-emerald-800 font-bold cursor-not-allowed";
-            else if (isSelected) optStyle = "bg-rose-50 border-rose-500 text-rose-800 cursor-not-allowed";
-            else optStyle = "bg-slate-50 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed";
+            const correctAnsArr = Array.isArray(q.ans) ? q.ans : [q.ans];
+            const isCorrectOpt = correctAnsArr.includes(optNum);
+            if (isCorrectOpt) {
+              optStyle = "bg-emerald-50 border-emerald-500 text-emerald-800 font-bold cursor-not-allowed";
+              iconBadge = `<span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">✓</span>`;
+            } else if (isSelected) {
+              optStyle = "bg-rose-50 border-rose-500 text-rose-800 cursor-not-allowed";
+              iconBadge = `<span class="w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">✕</span>`;
+            } else {
+              optStyle = "bg-slate-50 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed";
+            }
           } else {
-            if (isSelected) optStyle = "bg-indigo-50 border-indigo-600 text-indigo-800 font-bold";
+            // 答題中（即時選中樣式高亮）
+            if (isSelected) {
+              optStyle = "bg-indigo-50 border-2 border-indigo-600 text-indigo-800 font-bold shadow-sm";
+              iconBadge = `<span class="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">${optNum}</span>`;
+            }
           }
         }
 
         return `
-          <button onclick="handleOptionClick(${optNum})" ${disabledAttr} class="w-full p-3 rounded-xl border text-left text-xs sm:text-sm transition flex items-start space-x-2.5 ${optStyle}">
-            <span class="w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">${optNum}</span>
-            <span class="leading-relaxed">${optText}</span>
+          <button type="button" onclick="handleOptionClick(${optNum})" ${disabledAttr} class="w-full p-3 rounded-xl border text-left text-xs sm:text-sm transition flex items-start space-x-2.5 ${optStyle}">
+            ${iconBadge}
+            <span class="leading-relaxed flex-1">${optText}</span>
           </button>
         `;
       }).join('');
 
+      // 即時解析展示
       const expBox = document.getElementById('q-explanation');
       const sarcasmBox = document.getElementById('exp-sarcasm');
       const streakStatusBox = document.getElementById('exp-streak-status');
@@ -798,16 +822,26 @@
         expBox.classList.remove('hidden');
         let isCorrect = false;
         if (isMulti) {
-          isCorrect = JSON.stringify([...answered].sort()) === JSON.stringify([...q.ans].sort());
+          const userArr = (Array.isArray(answered) ? answered : [answered]).map(Number).sort();
+          const correctArr = (Array.isArray(q.ans) ? q.ans : [q.ans]).map(Number).sort();
+          isCorrect = JSON.stringify(userArr) === JSON.stringify(correctArr);
         } else {
           isCorrect = answered === q.ans;
         }
 
-        const ansLabel = isMulti ? q.ans.join('、') : q.ans;
-        const correctText = isMulti ? q.ans.map(i => `${i}. ${q.opt[i-1]}`).join('；') : `${q.ans}. ${q.opt[q.ans-1]}`;
-        const userText = isMulti 
-          ? (answered.length > 0 ? answered.map(i => `${i}. ${q.opt[i-1]}`).join('；') : '未選')
-          : (answered ? `${answered}. ${q.opt[answered-1]}` : '未選');
+        const ansLabel = isMulti ? (Array.isArray(q.ans) ? q.ans.join('、') : q.ans) : q.ans;
+        const correctText = isMulti 
+          ? (Array.isArray(q.ans) ? q.ans.map(i => `${i}. ${q.opt[i-1]}`).join('；') : `${q.ans}. ${q.opt[q.ans-1]}`)
+          : `${q.ans}. ${q.opt[q.ans-1]}`;
+        
+        let userText = '未選';
+        if (isMulti) {
+          userText = (Array.isArray(answered) && answered.length > 0) 
+            ? answered.map(i => `${i}. ${q.opt[i-1]}`).join('；') 
+            : '未選';
+        } else {
+          userText = answered ? `${answered}. ${q.opt[answered-1]}` : '未選';
+        }
 
         document.getElementById('exp-status').innerHTML = isCorrect 
           ? `<span class="text-emerald-700 font-bold">✅ 回答正確！正解為 (${ansLabel})</span>`
@@ -862,15 +896,23 @@
 
     function handleOptionClick(num) {
       const q = currentPool[currentIndex];
+      
+      // 已答過且在即時模式下鎖定不可再選
       if (isInstantFeedback && userAnswers[currentIndex] !== undefined) {
         return;
       }
 
       if (isMultiQuestion(q)) {
-        if (multiDraft.includes(num)) multiDraft = multiDraft.filter(x => x !== num);
-        else multiDraft.push(num);
+        // 複選題切換選取狀態
+        if (multiDraft.includes(num)) {
+          multiDraft = multiDraft.filter(x => x !== num);
+        } else {
+          multiDraft.push(num);
+        }
+        // 重新繪製當前畫面，讓按鈕即時變色反白
         loadQuestion(currentIndex);
       } else {
+        // 單選題直接判定
         userAnswers[currentIndex] = num;
         const isCorrect = (num === q.ans);
         handleAnswerStreakEvaluation(q.id, isCorrect);
@@ -884,11 +926,17 @@
       if (isInstantFeedback && userAnswers[currentIndex] !== undefined) {
         return;
       }
-      if (multiDraft.length === 0) { alert('請至少選擇一個選項！'); return; }
+      if (!multiDraft || multiDraft.length === 0) { 
+        alert('這是一道複選題，請至少點選一個選項後再按送出！'); 
+        return; 
+      }
       const q = currentPool[currentIndex];
       userAnswers[currentIndex] = [...multiDraft];
       
-      const isCorrect = JSON.stringify([...multiDraft].sort()) === JSON.stringify([...q.ans].sort());
+      const userArr = [...multiDraft].map(Number).sort();
+      const correctArr = (Array.isArray(q.ans) ? q.ans : [q.ans]).map(Number).sort();
+      const isCorrect = JSON.stringify(userArr) === JSON.stringify(correctArr);
+      
       handleAnswerStreakEvaluation(q.id, isCorrect);
 
       saveStorage();
